@@ -1,0 +1,16 @@
+<svg width="960" height="240" viewBox="0 0 960 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Chorely full horizontal logo</title>
+  <desc id="desc">Chorely logo with a house and heart icon, wordmark, and tagline.</desc>
+  <rect width="960" height="240" fill="#FFFAF0"/>
+  <g transform="translate(64 48)">
+    <rect width="144" height="144" rx="36" fill="#7FA66A"/>
+    <rect x="93.4" y="33.8" width="12.4" height="22.5" rx="4.5" fill="#FFFAF0"/>
+    <path d="M31.5 67.5L67.3 37.4C70 35.1 74 35.1 76.7 37.4L112.5 67.5V103.5C112.5 110.96 106.46 117 99 117H45C37.54 117 31.5 110.96 31.5 103.5V67.5Z" fill="#FFFAF0"/>
+    <path d="M72 101.7C60.1 93.2 52.2 86 52.2 77.4C52.2 71.3 56.9 66.6 63 66.6C66.6 66.6 69.9 68.4 72 71.6C74.1 68.4 77.4 66.6 81 66.6C87.1 66.6 91.8 71.3 91.8 77.4C91.8 86 83.9 93.2 72 101.7Z" fill="#C9973D"/>
+  </g>
+  <g transform="translate(248 72)">
+    <text x="0" y="52" fill="#2F3A32" font-family="Inter, Manrope, Sora, Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="-0.5">Chorely</text>
+    <text x="3" y="100" fill="#5D5147" font-family="Inter, Manrope, Sora, Arial, sans-serif" font-size="24" font-weight="500">Building Responsibility, One Task at a Time</text>
+    <text x="3" y="136" fill="#7FA66A" font-family="Inter, Manrope, Sora, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1.4">chorely.pro</text>
+  </g>
+</svg>
