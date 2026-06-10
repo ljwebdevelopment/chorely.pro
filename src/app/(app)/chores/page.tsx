@@ -5,8 +5,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { centsToDollars } from "@/lib/money";
 import { requirePageData } from "@/lib/page-data";
 import { ChoreCommentPanel, type LatestChoreComment } from "@/components/chore-comments";
+import { ChoreBell } from "@/components/chore-bell";
 
-export default async function ChoresPage({ searchParams }: { searchParams: Promise<{ error?: string; updated?: string; archived?: string; comment?: string }> }) {
+export default async function ChoresPage({ searchParams }: { searchParams: Promise<{ error?: string; updated?: string; archived?: string; comment?: string; reminder?: string }> }) {
   const params = await searchParams;
   const context = await getAppContext({ requireSubscription: true, requireOnboarding: true });
   const supabase = await createSupabaseServerClient();
@@ -39,7 +40,7 @@ export default async function ChoresPage({ searchParams }: { searchParams: Promi
       <div className="page-head">
         <div>
           <p className="eyebrow">Chores</p>
-          <h1>Kitchen chore board</h1>
+          <h1>Family chore board</h1>
         </div>
         <Link className="button" href="/chores/new">Add chore</Link>
       </div>
@@ -48,6 +49,7 @@ export default async function ChoresPage({ searchParams }: { searchParams: Promi
       {params.archived === "chore" ? <p className="notice">Chore tucked away.</p> : null}
       {params.comment === "added" ? <p className="notice">Household note saved on the chore card.</p> : null}
       {params.comment === "read" ? <p className="notice">Household note marked read.</p> : null}
+      {params.reminder ? <p className="notice">Reminder sent for &quot;{params.reminder}&quot; — the kids will see it on their chore view.</p> : null}
       <section className="stack">
         {choreRows.length ? choreRows.map((chore) => (
           <article className="card chore-card" key={chore.id}>
@@ -60,6 +62,7 @@ export default async function ChoresPage({ searchParams }: { searchParams: Promi
                 </p>
               </div>
               <div className="actions">
+                <ChoreBell choreId={chore.id} source="/chores" />
                 <Link className="secondary-button" href={`/chores/${chore.id}/edit`}>Edit</Link>
                 <form action={deleteChoreAction}>
                   <input type="hidden" name="id" value={chore.id} />

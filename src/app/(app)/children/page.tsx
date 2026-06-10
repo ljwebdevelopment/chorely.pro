@@ -36,6 +36,9 @@ export default async function ChildrenPage({
       {params.archived === "child" ? <p className="notice">Child profile archived.</p> : null}
       {params.reminder ? <p className="notice">Reminder sent. {params.reminder} will see it on the Kids&apos; Chore View.</p> : null}
       <ChildForm />
+      <p className="meta">
+        Forgot a PIN? You can never be locked out: open a child&apos;s Details page and enter a new PIN to reset it instantly.
+      </p>
       <section className="grid">
         {childRows.length ? childRows.map((child) => {
           const total = ledgerRows.filter((row) => row.child_id === child.id).reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Bell, CheckCircle2, HandCoins, ListChecks, Plus, Users } from "lucide-react";
 import { getAppContext } from "@/lib/auth-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { centsToDollars } from "@/lib/money";
@@ -7,8 +8,10 @@ import { requirePageData } from "@/lib/page-data";
 import { weeklyActivityStats } from "@/lib/report-domain";
 import { ChoreCommentPanel, type LatestChoreComment } from "@/components/chore-comments";
 import { BuddyCard } from "@/components/chore-buddy";
+import { ChoreBell } from "@/components/chore-bell";
+import { DashboardTour } from "@/components/dashboard-tour";
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ comment?: string; error?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ comment?: string; error?: string; reminder?: string }> }) {
   const params = await searchParams;
   const context = await getAppContext({ requireSubscription: true, requireOnboarding: true });
   const supabase = await createSupabaseServerClient();
@@ -24,7 +27,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     { data: notifications, error: notificationsError },
     { data: completions, error: completionsError },
     { data: weeklyCompletions, error: weeklyCompletionsError },
-    { data: comments, error: commentsError }
+    { data: comments, error: commentsError },
+    { data: householdStyle }
   ] = await Promise.all([
     supabase
       .from("chores")
@@ -48,14 +52,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .in("status", ["collecting", "pending", "approved"]),
     supabase
       .from("chore_completions")
-      .select("status,chore_id,completed_at,participant_child_ids,completed_by_child_id")
+      .select("status,chore_id,completed_at,participant_child_ids,completed_by_child_id,chores(title)")
       .eq("household_id", householdId)
-      .in("status", ["collecting", "pending", "approved", "rejected", "redo_requested"]),
+      .in("status", ["collecting", "pending", "approved", "rejected", "redo_requested"])
+      .order("completed_at", { ascending: false }),
     supabase
       .from("chore_comments")
       .select("id,chore_id,kind,alert_label,note,read_at,created_at")
       .eq("household_id", householdId)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false }),
+    // buddy_style ships in migration 004; tolerate its absence so the
+    // dashboard never breaks on a database that has not run it yet.
+    supabase.from("households").select("buddy_style").eq("id", householdId).maybeSingle()
   ]);
   const choreRows = requirePageData({ data: chores, error: choresError, label: "Dashboard chores" });
   const approvalRows = requirePageData({ data: approvals, error: approvalsError, label: "Pending approvals" });
@@ -65,8 +73,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const completionRows = requirePageData({ data: completions, error: completionsError, label: "Dashboard completions" });
   const weeklyCompletionRows = requirePageData({ data: weeklyCompletions, error: weeklyCompletionsError, label: "Weekly progress" });
   const commentRows = requirePageData({ data: comments, error: commentsError, label: "Dashboard household notes" });
+  const buddyStyle = householdStyle?.buddy_style || null;
 
   const activeChildIds = childRows.map((child) => child.id);
+  const childNameById = new Map(childRows.map((child) => [child.id, child.name]));
   const completionByChore = new Map(completionRows.map((completion) => [completion.chore_id, completion]));
   const dueChores = choreRows.filter((chore) => {
     const assignedIds = (chore.chore_assignments || []).map((row: { child_id: string }) => row.child_id);
@@ -86,6 +96,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   });
   const total = ledgerRows.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
   const weekly = weeklyActivityStats(weeklyCompletionRows);
+  const recentActivity = weeklyCompletionRows.slice(0, 5);
   const latestCommentByChore = new Map<string, LatestChoreComment>();
   for (const comment of commentRows) {
     if (!latestCommentByChore.has(comment.chore_id)) {
@@ -93,12 +104,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     }
   }
 
+  const quickActions = [
+    { href: "/chores/new", label: "Add Chore", icon: Plus },
+    { href: "/approvals", label: approvalRows.length ? `Approve (${approvalRows.length})` : "Approve Chores", icon: CheckCircle2 },
+    { href: "/children", label: "Send Reminder", icon: Bell },
+    { href: "/earnings", label: "Record Payout", icon: HandCoins },
+    { href: "/chores", label: "Assign Chores", icon: ListChecks },
+    { href: "/notifications", label: "Recent Activity", icon: Users }
+  ];
+
   return (
     <div className="stack">
       <div className="page-head">
         <div>
           <p className="eyebrow">Home Board</p>
-          <h1>Family command center</h1>
+          <h1>Welcome home</h1>
         </div>
         <Link className="button" href="/chores/new">
           New chore
@@ -107,6 +127,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {params.error ? <p className="error">{params.error}</p> : null}
       {params.comment === "added" ? <p className="notice">Household note pinned to the chore.</p> : null}
       {params.comment === "read" ? <p className="notice">Household note marked read.</p> : null}
+      {params.reminder ? <p className="notice">Reminder sent — the kids will see it on their chore view.</p> : null}
+      <DashboardTour />
+      <nav className="quick-actions" aria-label="Quick actions">
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <Link className="quick-action" href={action.href} key={action.label}>
+              <Icon size={20} aria-hidden="true" />
+              <span>{action.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
       <section className="stats-grid">
         <div className="stat"><span>Today&apos;s Chores</span><strong>{dueChores.length}</strong></div>
         <div className="stat"><span>Pending approvals</span><strong>{approvalRows.length}</strong></div>
@@ -122,7 +155,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <div className="mini-chore-card" key={chore.id}>
                   <div className="list-item">
                     <div><strong>{chore.title}</strong><p className="meta">{chore.frequency} / {centsToDollars(chore.reward_cents)}</p></div>
-                    <Link className="secondary-button" href={`/chores/${chore.id}/edit`}>Edit</Link>
+                    <div className="actions">
+                      <ChoreBell choreId={chore.id} source="/dashboard" />
+                      <Link className="secondary-button" href={`/chores/${chore.id}/edit`}>Edit</Link>
+                    </div>
                   </div>
                   <ChoreCommentPanel choreId={chore.id} source="/dashboard" latestComment={latestCommentByChore.get(chore.id)} />
                 </div>
@@ -140,6 +176,40 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               )) : <p className="muted">No pending approvals.</p>}
             </div>
           </article>
+          <article className="card">
+            <h2>Family Activity</h2>
+            <div className="list">
+              {recentActivity.length ? recentActivity.map((completion, index) => {
+                const chore = (Array.isArray(completion.chores) ? completion.chores[0] : completion.chores) as { title?: string } | null;
+                const names = (completion.participant_child_ids?.length
+                  ? completion.participant_child_ids
+                  : [completion.completed_by_child_id]
+                )
+                  .map((id: string | null) => (id ? childNameById.get(id) : null))
+                  .filter(Boolean)
+                  .join(" and ");
+                const statusLabel =
+                  completion.status === "approved"
+                    ? "approved"
+                    : completion.status === "pending"
+                      ? "waiting for review"
+                      : completion.status === "collecting"
+                        ? "in progress together"
+                        : completion.status.replace("_", " ");
+                return (
+                  <div className="list-item" key={`${completion.chore_id}-${completion.completed_at}-${index}`}>
+                    <div>
+                      <strong>{names || "Someone"}</strong>
+                      <p className="meta">
+                        {chore?.title || "a chore"} — {statusLabel}
+                      </p>
+                    </div>
+                    <span className="meta">{new Date(completion.completed_at).toLocaleDateString()}</span>
+                  </div>
+                );
+              }) : <p className="muted">Completed chores will show up here as the family gets going.</p>}
+            </div>
+          </article>
         </div>
         <aside className="stack">
           <article className="card">
@@ -149,7 +219,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               Last 7 days: {weekly.pending} pending, {weekly.redoRequested} redo requested, and {weekly.rejected} rejected.
             </p>
           </article>
-          <BuddyCard weeklyApproved={weekly.approved} wateredToday={completionRows.length > 0} title="Sprout, the family chore buddy" />
+          <BuddyCard weeklyApproved={weekly.approved} wateredToday={completionRows.length > 0} title="Sprout, the family chore buddy" style={buddyStyle} />
           <article className="card">
             <h2>Household Notes</h2>
             {notificationRows.length ? notificationRows.map((notification) => (

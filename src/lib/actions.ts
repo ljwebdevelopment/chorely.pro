@@ -11,7 +11,7 @@ import { rewardCentsFromInput } from "@/lib/money";
 import { hashPin, verifyPin } from "@/lib/security";
 import { createNotification } from "@/lib/notifications";
 import { choreMilestones, milestoneNotificationPayloads, notificationWriteFailureMessage } from "@/lib/notification-domain";
-import { reminderBody } from "@/lib/buddy-domain";
+import { normalizeBuddyStyle, reminderBody } from "@/lib/buddy-domain";
 import {
   activeAssignedChildIds,
   canAddCompletionProgress,
@@ -1292,6 +1292,76 @@ export async function sendChildReminderAction(formData: FormData) {
   revalidatePath("/child");
   revalidatePath("/notifications");
   redirect(`/children?reminder=${encodeURIComponent(child.name)}`);
+}
+
+export async function saveBuddyStyleAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const context = await getAppContext({ requireSubscription: true, requireOnboarding: true });
+  if (!context.household) redirect("/onboarding");
+
+  const source = safeRedirectPath(formString(formData, "source"), "/child");
+  const style = normalizeBuddyStyle({
+    pot: formString(formData, "pot"),
+    bloom: formString(formData, "bloom"),
+    face: formString(formData, "face")
+  });
+
+  const { data: updated, error } = await supabase
+    .from("households")
+    .update({ buddy_style: style, updated_at: new Date().toISOString() })
+    .eq("id", context.household.id)
+    .select("id")
+    .maybeSingle();
+  if (error || !updated) {
+    redirect(`${source}?error=${encodeURIComponent("Sprout's new look could not be saved right now.")}`);
+  }
+
+  revalidatePath("/child");
+  revalidatePath("/dashboard");
+  redirect(`${source}?buddy=saved`);
+}
+
+export async function sendChoreReminderAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const context = await getAppContext({ requireSubscription: true, requireOnboarding: true });
+  if (!context.household) redirect("/onboarding");
+
+  const choreId = formString(formData, "chore_id");
+  const source = safeRedirectPath(formString(formData, "source"), "/chores");
+  const { data: chore, error: choreError } = await supabase
+    .from("chores")
+    .select("id,title,chore_assignments(children(name,archived_at))")
+    .eq("id", choreId)
+    .eq("household_id", context.household.id)
+    .eq("active", true)
+    .maybeSingle();
+  if (choreError || !chore) {
+    redirect(`${source}?error=${encodeURIComponent("This chore could not be found.")}`);
+  }
+
+  const assignedNames = (chore.chore_assignments || [])
+    .map((assignment: { children: { name: string; archived_at: string | null } | { name: string; archived_at: string | null }[] | null }) =>
+      Array.isArray(assignment.children) ? assignment.children[0] : assignment.children
+    )
+    .filter((child): child is { name: string; archived_at: string | null } => Boolean(child && !child.archived_at))
+    .map((child) => child.name);
+
+  const { error: notificationError } = await createNotification({
+    householdId: context.household.id,
+    userId: context.user.id,
+    type: "child_reminder",
+    title: `Chore reminder: ${chore.title}`,
+    body: assignedNames.length
+      ? `${assignedNames.join(" and ")}, your parent sent a reminder — "${chore.title}" is waiting for you.`
+      : `Your parent sent a reminder — "${chore.title}" is waiting.`
+  });
+  if (notificationError) {
+    redirect(`${source}?error=${encodeURIComponent("The reminder could not be sent right now.")}`);
+  }
+
+  revalidatePath("/child");
+  revalidatePath("/notifications");
+  redirect(`${source}?reminder=${encodeURIComponent(chore.title)}`);
 }
 
 export async function markAllNotificationsReadAction() {

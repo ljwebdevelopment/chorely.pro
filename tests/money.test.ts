@@ -15,4 +15,12 @@ describe("money helpers", () => {
     assert.throws(() => rewardCentsFromInput("not-money"), /valid amount/);
     assert.throws(() => rewardCentsFromInput("-1"), /valid amount/);
   });
+
+  it("accepts money the way parents actually type it", () => {
+    assert.equal(rewardCentsFromInput("$5"), 500);
+    assert.equal(rewardCentsFromInput("$ 5.00"), 500);
+    assert.equal(rewardCentsFromInput("1,250.50"), 125050);
+    assert.equal(dollarsToCents("$12.34"), 1234);
+    assert.equal(dollarsToCents("$1,000"), 100000);
+  });
 });

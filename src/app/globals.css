@@ -125,7 +125,7 @@ button:disabled {
 .danger-button,
 .ghost-button {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -462,8 +462,21 @@ textarea {
   font-weight: 650;
 }
 
+.checkbox-line {
+  min-height: 32px;
+}
+
 .checkbox-line input {
-  width: auto;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  accent-color: var(--green);
+}
+
+.select-all-line {
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--line);
+  color: var(--navy);
 }
 
 .notice {
@@ -913,6 +926,199 @@ textarea {
   font-weight: 800;
 }
 
+/* Parent quick actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quick-action {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--slate);
+  padding: 14px 8px;
+  font-size: 0.85rem;
+  font-weight: 750;
+  text-align: center;
+  min-height: 44px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.quick-action:hover {
+  background: #eef3e7;
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.quick-action svg {
+  color: var(--green);
+}
+
+/* Dashboard tour */
+.tour-card {
+  background: linear-gradient(160deg, #fffdf5, #f6f1e2);
+}
+
+.tour-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tour-head h2 {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tour-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.tour-step {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fffdf7;
+  padding: 14px;
+}
+
+.tour-step h3 {
+  margin: 8px 0 6px;
+  font-size: 1rem;
+}
+
+.tour-step p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.tour-reopen {
+  width: fit-content;
+  font-size: 0.85rem;
+}
+
+/* Chore bell reminder button */
+.bell-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  border: 1px solid #d8c5aa;
+  border-radius: var(--radius);
+  background: #fffdf7;
+  color: var(--slate);
+  padding: 0 12px;
+  font-weight: 750;
+}
+
+.bell-button:hover {
+  border-color: var(--gold);
+  background: #fff4cf;
+  color: #6f4f12;
+}
+
+/* Kids' chore view */
+.kid-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 6px;
+  box-shadow: 0 6px 18px rgba(96, 72, 48, 0.08);
+}
+
+.kid-tabs a {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: 999px;
+  color: var(--slate);
+  font-size: 0.92rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.kid-tabs a:hover {
+  background: #eef3e7;
+  color: var(--green);
+}
+
+.kid-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kid-section-head h2 {
+  margin-bottom: 0;
+}
+
+#today,
+#coming-up,
+#done {
+  scroll-margin-top: 76px;
+}
+
+.kid-chore-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kid-chore-head h2 {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.reward-pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #eef3e7;
+  color: #4f6f45;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Buddy customizer */
+.buddy-customizer summary {
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+}
+
+.buddy-customizer summary::-webkit-details-marker {
+  display: none;
+}
+
+.buddy-customizer form {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  padding: 16px;
+}
+
 .reminder-notice {
   display: flex;
   align-items: center;
@@ -948,6 +1154,24 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kid-tabs {
+    top: 64px;
+  }
+
+  #today,
+  #coming-up,
+  #done {
+    scroll-margin-top: 130px;
+  }
+
 
   .nav {
     align-items: flex-start;
@@ -963,8 +1187,7 @@ textarea {
   .hero-grid,
   .two-column,
   .content-grid,
-  .grid,
-  .stats-grid {
+  .grid {
     grid-template-columns: 1fr;
   }
 
@@ -985,10 +1208,21 @@ textarea {
   .sidebar nav {
     display: flex;
     gap: 8px;
-    margin-top: 16px;
+    margin-top: 12px;
     overflow-x: auto;
     padding-bottom: 4px;
     scrollbar-width: thin;
+  }
+
+  .sidebar form {
+    margin-top: 8px !important;
+  }
+
+  .sidebar form .secondary-button {
+    width: fit-content;
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.88rem;
   }
 
   .sidebar a {

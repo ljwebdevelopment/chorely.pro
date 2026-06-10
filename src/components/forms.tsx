@@ -2,6 +2,7 @@ import { saveChildAction, saveChoreAction } from "@/lib/actions";
 import type { Child, Chore } from "@/lib/types";
 import { centsToDollars } from "@/lib/money";
 import Link from "next/link";
+import { SelectAllChildren } from "@/components/select-all-children";
 
 type ChildFormProps = {
   child?: Pick<Child, "id" | "name" | "avatar_url">;
@@ -64,16 +65,17 @@ export function ChoreForm({ childProfiles, chore, source }: ChoreFormProps) {
         <input id="title" name="title" required maxLength={80} defaultValue={chore?.title || ""} />
       </div>
       <div className="field">
-        <label htmlFor="reward">Reward ($)</label>
+        <label htmlFor="reward">What it pays</label>
         <input
           id="reward"
           name="reward"
           type="text"
           inputMode="decimal"
-          placeholder="1.00"
+          placeholder="e.g. 2.50"
           required
           defaultValue={chore ? (chore.reward_cents / 100).toFixed(2) : ""}
         />
+        <p className="meta">Dollars and cents — typing a $ sign is fine too.</p>
       </div>
       <div className="field full">
         <label htmlFor="description">Description</label>
@@ -114,6 +116,7 @@ export function ChoreForm({ childProfiles, chore, source }: ChoreFormProps) {
       </fieldset>
       <fieldset className="field full checkbox-group">
         <legend>Assign children</legend>
+        {childProfiles.length > 1 ? <SelectAllChildren /> : null}
         {childProfiles.length ? (
           childProfiles.map((child) => (
             <label className="checkbox-line" htmlFor={`child_ids_${child.id}`} key={child.id}>

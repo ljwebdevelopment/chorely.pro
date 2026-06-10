@@ -1,14 +1,21 @@
 import { completeChoreAction, markNotificationReadAction } from "@/lib/actions";
 import { getAppContext } from "@/lib/auth-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { centsToDollars } from "@/lib/money";
 import { activeAssignedChildIds, isChoreDueOn, remainingCompletableChildIds } from "@/lib/chore-domain";
 import { requirePageData } from "@/lib/page-data";
 import { ChoreCommentPanel, type LatestChoreComment } from "@/components/chore-comments";
-import { BuddyCard } from "@/components/chore-buddy";
+import { BuddyCard, BuddyCustomizer } from "@/components/chore-buddy";
 import { dailyMotivationalMessage } from "@/lib/buddy-domain";
 import { weeklyActivityStats } from "@/lib/report-domain";
 
-export default async function ChildViewPage({ searchParams }: { searchParams: Promise<{ error?: string; completed?: string; comment?: string }> }) {
+const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+
+export default async function ChildViewPage({
+  searchParams
+}: {
+  searchParams: Promise<{ error?: string; completed?: string; comment?: string; buddy?: string }>;
+}) {
   const params = await searchParams;
   const context = await getAppContext({ requireSubscription: true, requireOnboarding: true });
   const supabase = await createSupabaseServerClient();
@@ -20,7 +27,8 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
     { data: chores, error: choresError },
     { data: completions, error: completionsError },
     { data: weeklyCompletions, error: weeklyCompletionsError },
-    { data: reminders }
+    { data: reminders },
+    { data: householdStyle }
   ] = await Promise.all([
     supabase.from("children").select("id,name").eq("household_id", householdId).is("archived_at", null),
     supabase
@@ -36,9 +44,10 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
       .in("status", ["collecting", "pending", "approved"]),
     supabase
       .from("chore_completions")
-      .select("status,chore_id,completed_at")
+      .select("status,chore_id,completed_at,chores(title,reward_cents)")
       .eq("household_id", householdId)
-      .in("status", ["collecting", "pending", "approved", "rejected", "redo_requested"]),
+      .in("status", ["collecting", "pending", "approved", "rejected", "redo_requested"])
+      .order("completed_at", { ascending: false }),
     supabase
       .from("notifications")
       .select("id,body,created_at")
@@ -46,7 +55,8 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
       .eq("type", "child_reminder")
       .is("read_at", null)
       .order("created_at", { ascending: false })
-      .limit(3)
+      .limit(3),
+    supabase.from("households").select("buddy_style").eq("id", householdId).maybeSingle()
   ]);
   const childRows = requirePageData({ data: children, error: childrenError, label: "Child profiles" });
   const choreRows = requirePageData({ data: chores, error: choresError, label: "Child view chores" });
@@ -54,14 +64,20 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
   const weeklyCompletionRows = requirePageData({ data: weeklyCompletions, error: weeklyCompletionsError, label: "Child view weekly progress" });
   const weekly = weeklyActivityStats(weeklyCompletionRows);
   const reminderRows = reminders || [];
+  const buddyStyle = householdStyle?.buddy_style || null;
   const completionByChore = new Map(completionRows.map((completion) => [completion.chore_id, completion]));
   const activeChildIds = childRows.map((child) => child.id);
-  const availableDueChores = choreRows.flatMap((chore) => {
+
+  const assignedChores = choreRows.flatMap((chore) => {
     const assignedIds = (chore.chore_assignments || []).map((row: { child_id: string }) => row.child_id);
     const activeAssignedIds = activeAssignedChildIds({ assignedChildIds: assignedIds, activeChildIds });
+    return activeAssignedIds.length ? [{ ...chore, activeAssignedIds }] : [];
+  });
+
+  const availableDueChores = assignedChores.flatMap((chore) => {
     const existingCompletion = completionByChore.get(chore.id);
     const completableChildIds = remainingCompletableChildIds({
-      assignedChildIds: activeAssignedIds,
+      assignedChildIds: chore.activeAssignedIds,
       existingStatus: existingCompletion?.status,
       existingParticipantIds: existingCompletion?.participant_child_ids || []
     });
@@ -73,6 +89,20 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
     });
     return due && completableChildIds.length ? [{ ...chore, activeAssignedIds: completableChildIds }] : [];
   });
+
+  // Non-daily chores and their next due day within the coming week.
+  const upcomingChores = assignedChores.flatMap((chore) => {
+    if (chore.frequency === "daily") return [];
+    for (let offset = 1; offset <= 7; offset += 1) {
+      const futureDate = new Date(today.getTime() + offset * 24 * 60 * 60 * 1000);
+      if (isChoreDueOn({ frequency: chore.frequency, customSchedule: chore.custom_schedule, createdAt: chore.created_at, dueDate: futureDate })) {
+        return [{ ...chore, dueLabel: offset === 1 ? "Tomorrow" : weekdayFormatter.format(futureDate) }];
+      }
+    }
+    return [];
+  });
+
+  const recentlyDone = weeklyCompletionRows.slice(0, 8);
   const dueChoreIds = availableDueChores.map((chore) => chore.id);
   const { data: comments, error: commentsError } = dueChoreIds.length
     ? await supabase
@@ -89,6 +119,8 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
       latestCommentByChore.set(comment.chore_id, comment);
     }
   }
+
+  const todayPotential = availableDueChores.reduce((sum, chore) => sum + Number(chore.reward_cents || 0), 0);
 
   return (
     <div className="stack">
@@ -113,7 +145,9 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
           </form>
         </div>
       ))}
-      <BuddyCard weeklyApproved={weekly.approved} wateredToday={completionRows.length > 0} />
+      <BuddyCard weeklyApproved={weekly.approved} wateredToday={completionRows.length > 0} style={buddyStyle} />
+      <BuddyCustomizer style={buddyStyle} source="/child" />
+      {params.buddy === "saved" ? <p className="notice">Sprout&apos;s new look is saved!</p> : null}
       {params.error ? <p className="error">{params.error}</p> : null}
       {params.completed === "approval" ? <p className="notice">Chore submitted for parent approval.</p> : null}
       {params.completed === "progress" ? (
@@ -121,7 +155,20 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
       ) : null}
       {params.comment === "added" ? <p className="notice">Household note added for a parent to see.</p> : null}
       {params.comment === "read" ? <p className="notice">Household note marked read.</p> : null}
-      <section className="stack">
+
+      <nav className="kid-tabs" aria-label="Chore sections">
+        <a href="#today">Today ({availableDueChores.length})</a>
+        <a href="#coming-up">Coming Up ({upcomingChores.length})</a>
+        <a href="#done">Done ({recentlyDone.length})</a>
+      </nav>
+
+      <section className="stack" id="today">
+        <div className="kid-section-head">
+          <h2>Today</h2>
+          {availableDueChores.length ? (
+            <span className="meta">Finish everything today and earn up to {centsToDollars(todayPotential)}</span>
+          ) : null}
+        </div>
         {availableDueChores.length ? availableDueChores.map((chore) => {
           const assignedChildren = childRows.filter((child) => chore.activeAssignedIds.includes(child.id));
           const splitPaymentAvailable = Boolean(chore.split_payment_enabled);
@@ -129,8 +176,11 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
             <article className="card chore-card" key={chore.id}>
               <form className="form-grid" action={completeChoreAction}>
                 <input type="hidden" name="chore_id" value={chore.id} />
-                <div className="field full">
+                <div className="field full kid-chore-head">
                   <h2>{chore.title}</h2>
+                  <span className="reward-pill">{centsToDollars(chore.reward_cents)}</span>
+                </div>
+                <div className="field full">
                   <p className="muted">{chore.description || "Complete the chore, then submit it for approval."}</p>
                 </div>
                 <div className="field">
@@ -147,7 +197,10 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
                   <>
                     <fieldset className="field full checkbox-group">
                       <legend>Completed Together participants</legend>
-                      <p className="meta">For split payments, include at least one other assigned child. The submitting child is always included.</p>
+                      <p className="meta">
+                        Did this one as a team? Check everyone who helped and the {centsToDollars(chore.reward_cents)} reward is split between
+                        you. The submitting child is always included.
+                      </p>
                       {assignedChildren.map((child) => (
                         <label className="checkbox-line" htmlFor={`participant-${chore.id}-${child.id}`} key={child.id}>
                           <input id={`participant-${chore.id}-${child.id}`} type="checkbox" name="participant_child_ids" value={child.id} />
@@ -174,7 +227,67 @@ export default async function ChildViewPage({ searchParams }: { searchParams: Pr
               <ChoreCommentPanel choreId={chore.id} source="/child" latestComment={latestCommentByChore.get(chore.id)} canMarkRead={false} />
             </article>
           );
-        }) : <div className="empty-state"><h2>No chores due today</h2><p className="muted">Ask a parent to check the schedule or create a chore with an active child assignment.</p></div>}
+        }) : <div className="empty-state"><h2>All done for today!</h2><p className="muted">Nothing is due right now. Check Coming Up to see what&apos;s next.</p></div>}
+      </section>
+
+      <section className="stack" id="coming-up">
+        <div className="kid-section-head">
+          <h2>Coming Up</h2>
+        </div>
+        {upcomingChores.length ? (
+          <div className="list">
+            {upcomingChores.map((chore) => (
+              <div className="list-item" key={chore.id}>
+                <div>
+                  <strong>{chore.title}</strong>
+                  <p className="meta">{chore.dueLabel}</p>
+                </div>
+                <span className="reward-pill">{centsToDollars(chore.reward_cents)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No weekly or monthly chores coming up in the next 7 days.</p>
+        )}
+      </section>
+
+      <section className="stack" id="done">
+        <div className="kid-section-head">
+          <h2>Done</h2>
+          <span className="meta">{weekly.approved} approved in the last 7 days</span>
+        </div>
+        {recentlyDone.length ? (
+          <div className="list">
+            {recentlyDone.map((completion, index) => {
+              const chore = (Array.isArray(completion.chores) ? completion.chores[0] : completion.chores) as
+                | { title?: string; reward_cents?: number }
+                | null;
+              const statusLabel =
+                completion.status === "approved"
+                  ? "Approved — money earned!"
+                  : completion.status === "pending"
+                    ? "Waiting for a parent to review"
+                    : completion.status === "collecting"
+                      ? "Team chore in progress"
+                      : completion.status === "redo_requested"
+                        ? "Parent asked for a redo"
+                        : "Not approved";
+              return (
+                <div className="list-item" key={`${completion.chore_id}-${completion.completed_at}-${index}`}>
+                  <div>
+                    <strong>{chore?.title || "Chore"}</strong>
+                    <p className="meta">{statusLabel}</p>
+                  </div>
+                  <span className={completion.status === "approved" ? "reward-pill" : "meta"}>
+                    {chore?.reward_cents != null ? centsToDollars(Number(chore.reward_cents)) : ""}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="muted">Chores you finish will show up here with their status.</p>
+        )}
       </section>
     </div>
   );
