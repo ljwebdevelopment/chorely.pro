@@ -36,7 +36,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .eq("household_id", householdId)
       .eq("active", true),
     supabase.from("chore_completions").select("id,chores(title),completed_at").eq("household_id", householdId).eq("status", "pending").limit(6),
-    supabase.from("earnings_ledger").select("amount_cents").eq("household_id", householdId).eq("status", "approved"),
+    supabase.from("earnings_ledger").select("child_id,amount_cents").eq("household_id", householdId).eq("status", "approved"),
     supabase.from("children").select("id,name").eq("household_id", householdId).is("archived_at", null),
     supabase
       .from("notifications")
@@ -94,7 +94,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       dueDate: today
     });
   });
-  const total = ledgerRows.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
+  // Balance = approved earnings (positive entries) minus recorded payouts
+  // (negative entries). Lifetime earned counts only the positive side.
+  const familyBalance = ledgerRows.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
+  const lifetimeEarned = ledgerRows
+    .filter((row) => Number(row.amount_cents) > 0)
+    .reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
+  const balanceByChild = new Map<string, number>();
+  for (const row of ledgerRows) {
+    balanceByChild.set(row.child_id, (balanceByChild.get(row.child_id) || 0) + Number(row.amount_cents || 0));
+  }
   const weekly = weeklyActivityStats(weeklyCompletionRows);
   const recentActivity = weeklyCompletionRows.slice(0, 5);
   const latestCommentByChore = new Map<string, LatestChoreComment>();
@@ -128,6 +137,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {params.comment === "added" ? <p className="notice">Household note pinned to the chore.</p> : null}
       {params.comment === "read" ? <p className="notice">Household note marked read.</p> : null}
       {params.reminder ? <p className="notice">Reminder sent — the kids will see it on their chore view.</p> : null}
+      <section className="balance-hero" aria-label="Chorely balance">
+        <p className="balance-hero-amount">{centsToDollars(familyBalance)}</p>
+        <p className="balance-hero-label">Chorely Balance</p>
+        {childRows.length > 1 ? (
+          <div className="balance-hero-children">
+            {childRows.map((child) => (
+              <Link className="balance-chip" href="/earnings" key={child.id}>
+                <span>{child.name}</span>
+                <strong>{centsToDollars(balanceByChild.get(child.id) || 0)}</strong>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+        <p className="balance-hero-meta">Approved chores add to it, recorded payouts come out of it.</p>
+      </section>
       <DashboardTour />
       <nav className="quick-actions" aria-label="Quick actions">
         {quickActions.map((action) => {
@@ -144,7 +168,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="stat"><span>Today&apos;s Chores</span><strong>{dueChores.length}</strong></div>
         <div className="stat"><span>Pending approvals</span><strong>{approvalRows.length}</strong></div>
         <div className="stat"><span>Family Members</span><strong>{childRows.length}</strong></div>
-        <div className="stat"><span>Allowance Earned</span><strong>{centsToDollars(total)}</strong></div>
+        <div className="stat"><span>Lifetime Earned</span><strong>{centsToDollars(lifetimeEarned)}</strong></div>
       </section>
       <section className="content-grid">
         <div className="stack">

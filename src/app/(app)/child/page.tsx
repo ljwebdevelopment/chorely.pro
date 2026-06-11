@@ -74,6 +74,24 @@ export default async function ChildViewPage({
   const activeChild =
     activeProfile?.type === "child" ? childRows.find((child) => child.id === activeProfile.childId) || null : null;
 
+  // Cash App-style balance for the signed-in child: approved earnings minus
+  // recorded payouts from the same ledger the parents see.
+  let childBalance = 0;
+  let childLifetimeEarned = 0;
+  if (activeChild) {
+    const { data: ledger, error: ledgerError } = await supabase
+      .from("earnings_ledger")
+      .select("amount_cents")
+      .eq("household_id", householdId)
+      .eq("child_id", activeChild.id)
+      .eq("status", "approved");
+    const ledgerRows = requirePageData({ data: ledger, error: ledgerError, label: "Child balance" });
+    childBalance = ledgerRows.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
+    childLifetimeEarned = ledgerRows
+      .filter((row) => Number(row.amount_cents) > 0)
+      .reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
+  }
+
   const assignedChores = choreRows.flatMap((chore) => {
     const assignedIds = (chore.chore_assignments || []).map((row: { child_id: string }) => row.child_id);
     const activeAssignedIds = activeAssignedChildIds({ assignedChildIds: assignedIds, activeChildIds });
@@ -138,6 +156,15 @@ export default async function ChildViewPage({
           <p className="muted">{dailyMotivationalMessage()}</p>
         </div>
       </div>
+      {activeChild ? (
+        <section className="balance-hero" aria-label="Your Chorely balance">
+          <p className="balance-hero-amount">{centsToDollars(childBalance)}</p>
+          <p className="balance-hero-label">Your Chorely Balance</p>
+          <p className="balance-hero-meta">
+            {centsToDollars(childLifetimeEarned)} earned all-time — finish chores below to grow it!
+          </p>
+        </section>
+      ) : null}
       {reminderRows.map((reminder) => (
         <div className="notice reminder-notice" key={reminder.id}>
           <span>
