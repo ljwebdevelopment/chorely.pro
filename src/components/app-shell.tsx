@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { Bell, BookOpen, ChartNoAxesColumn, CheckSquare, CreditCard, Home, Settings, Users } from "lucide-react";
+import { Bell, BookOpen, ChartNoAxesColumn, CheckSquare, CreditCard, Home, Settings, UserRound, Users } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
 import { ActiveLink } from "@/components/active-link";
 import { NotificationBridge } from "@/components/notification-bridge";
 import { getAppContext } from "@/lib/auth-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { signOutAction } from "@/lib/actions";
+import { getActiveProfile } from "@/lib/profile-session";
+import { signOutAction, switchProfileAction } from "@/lib/actions";
 
 const links = [
   { href: "/dashboard", label: "Home Board", icon: Home },
@@ -21,7 +22,44 @@ const links = [
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const context = await getAppContext({ requireSubscription: true });
   if (!context.onboardingComplete) redirect("/onboarding");
+  const profile = await getActiveProfile();
+  if (!profile) redirect("/profiles");
   const supabase = await createSupabaseServerClient();
+
+  if (profile.type === "child") {
+    const { data: child } = await supabase
+      .from("children")
+      .select("id,name")
+      .eq("id", profile.childId)
+      .eq("household_id", context.household?.id || "")
+      .is("archived_at", null)
+      .maybeSingle();
+    if (!child) redirect("/profiles");
+
+    return (
+      <div className="app-shell">
+        <aside className="sidebar kid-sidebar">
+          <BrandLogo />
+          <p className="meta" style={{ marginTop: 12 }}>
+            Hi {child.name}! — {context.household?.name || "Household"}
+          </p>
+          <nav aria-label="Kid navigation">
+            <ActiveLink href="/child">
+              <CheckSquare size={18} aria-hidden="true" />
+              My Chores
+            </ActiveLink>
+          </nav>
+          <form action={switchProfileAction} style={{ marginTop: 24 }}>
+            <button className="secondary-button" type="submit">
+              <UserRound size={16} aria-hidden="true" /> Switch profile
+            </button>
+          </form>
+        </aside>
+        <main className="app-main">{children}</main>
+      </div>
+    );
+  }
+
   const { count: unreadCount } = await supabase
     .from("notifications")
     .select("id", { count: "exact", head: true })
@@ -54,11 +92,18 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           })}
           <ActiveLink href="/child">Kids&apos; Chore View</ActiveLink>
         </nav>
-        <form action={signOutAction} style={{ marginTop: 24 }}>
-          <button className="secondary-button" type="submit">
-            Sign out
-          </button>
-        </form>
+        <div className="sidebar-actions">
+          <form action={switchProfileAction}>
+            <button className="secondary-button" type="submit">
+              <UserRound size={16} aria-hidden="true" /> Switch profile
+            </button>
+          </form>
+          <form action={signOutAction}>
+            <button className="ghost-button" type="submit">
+              Sign out
+            </button>
+          </form>
+        </div>
       </aside>
       <main className="app-main">{children}</main>
       <NotificationBridge />

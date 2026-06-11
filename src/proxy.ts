@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { ACTIVE_PROFILE_COOKIE, profileRedirectPath } from "@/lib/profile-domain";
 
 const protectedPrefixes = [
   "/dashboard",
@@ -12,6 +13,7 @@ const protectedPrefixes = [
   "/account",
   "/onboarding",
   "/child",
+  "/profiles",
   "/api/stripe/checkout",
   "/api/stripe/portal"
 ];
@@ -43,6 +45,19 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
     url.searchParams.set("next", signInNextPath(currentPath));
+    return NextResponse.redirect(url);
+  }
+
+  // Profile switcher gates: signed-in family members must pick a profile
+  // before app pages, and child profiles only ever see the kids' view.
+  const profileRedirect = profileRedirectPath({
+    pathname: request.nextUrl.pathname,
+    cookieValue: request.cookies.get(ACTIVE_PROFILE_COOKIE)?.value
+  });
+  if (profileRedirect) {
+    const url = request.nextUrl.clone();
+    url.pathname = profileRedirect;
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

@@ -12,6 +12,8 @@ import { hashPin, verifyPin } from "@/lib/security";
 import { createNotification } from "@/lib/notifications";
 import { choreMilestones, milestoneNotificationPayloads, notificationWriteFailureMessage } from "@/lib/notification-domain";
 import { normalizeBuddyStyle, reminderBody } from "@/lib/buddy-domain";
+import { parentPinError } from "@/lib/profile-domain";
+import { clearActiveProfile, setActiveProfile } from "@/lib/profile-session";
 import {
   activeAssignedChildIds,
   canAddCompletionProgress,
@@ -135,7 +137,91 @@ export async function signInAction(formData: FormData) {
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
+  await clearActiveProfile();
   redirect("/");
+}
+
+export async function selectProfileAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const context = await getAppContext({ requireSubscription: true, requireOnboarding: true });
+  if (!context.household) redirect("/onboarding");
+
+  const choice = formString(formData, "profile");
+
+  if (choice === "parent") {
+    // parent_pin_hash ships in migration 005; tolerate its absence so the
+    // profile screen keeps working on a database that has not run it yet.
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("parent_pin_hash")
+      .eq("id", context.user.id)
+      .maybeSingle();
+    if (profileRow?.parent_pin_hash) {
+      const pin = formString(formData, "pin");
+      if (!pin || !verifyPin(pin, profileRow.parent_pin_hash)) {
+        redirect(`/profiles?error=${encodeURIComponent("That parent PIN is not right. Try again.")}`);
+      }
+    }
+    await setActiveProfile({ type: "parent" });
+    redirect("/dashboard");
+  }
+
+  const { data: child, error: childError } = await supabase
+    .from("children")
+    .select("id")
+    .eq("id", choice)
+    .eq("household_id", context.household.id)
+    .is("archived_at", null)
+    .maybeSingle();
+  if (childError || !child) {
+    redirect(`/profiles?error=${encodeURIComponent("That profile could not be found.")}`);
+  }
+
+  await setActiveProfile({ type: "child", childId: child.id });
+  redirect("/child");
+}
+
+export async function switchProfileAction() {
+  await clearActiveProfile();
+  redirect("/profiles");
+}
+
+export async function saveParentPinAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const context = await getAppContext({ requireSubscription: true });
+
+  if (formString(formData, "action") === "remove") {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ parent_pin_hash: null, updated_at: new Date().toISOString() })
+      .eq("id", context.user.id);
+    if (error) {
+      redirect(`/account/security?error=${encodeURIComponent("The parent PIN could not be removed right now.")}`);
+    }
+    revalidatePath("/account/security");
+    redirect("/account/security?updated=pin-removed");
+  }
+
+  const pin = formString(formData, "parent_pin");
+  const pinError = parentPinError(pin);
+  if (pinError) {
+    redirect(`/account/security?error=${encodeURIComponent(pinError)}`);
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ parent_pin_hash: hashPin(pin), updated_at: new Date().toISOString() })
+    .eq("id", context.user.id);
+  if (error) {
+    redirect(
+      `/account/security?error=${encodeURIComponent(
+        "The parent PIN could not be saved. If this keeps happening, the parent PIN database migration may still need to run."
+      )}`
+    );
+  }
+
+  revalidatePath("/account/security");
+  redirect("/account/security?updated=pin");
 }
 
 export async function forgotPasswordAction(formData: FormData) {

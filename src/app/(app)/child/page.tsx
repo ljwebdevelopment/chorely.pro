@@ -8,6 +8,7 @@ import { ChoreCommentPanel, type LatestChoreComment } from "@/components/chore-c
 import { BuddyCard, BuddyCustomizer } from "@/components/chore-buddy";
 import { dailyMotivationalMessage } from "@/lib/buddy-domain";
 import { weeklyActivityStats } from "@/lib/report-domain";
+import { getActiveProfile } from "@/lib/profile-session";
 
 const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "long" });
 
@@ -68,9 +69,15 @@ export default async function ChildViewPage({
   const completionByChore = new Map(completionRows.map((completion) => [completion.chore_id, completion]));
   const activeChildIds = childRows.map((child) => child.id);
 
+  // When a child profile is active, the whole view narrows to that child.
+  const activeProfile = await getActiveProfile();
+  const activeChild =
+    activeProfile?.type === "child" ? childRows.find((child) => child.id === activeProfile.childId) || null : null;
+
   const assignedChores = choreRows.flatMap((chore) => {
     const assignedIds = (chore.chore_assignments || []).map((row: { child_id: string }) => row.child_id);
     const activeAssignedIds = activeAssignedChildIds({ assignedChildIds: assignedIds, activeChildIds });
+    if (activeChild && !activeAssignedIds.includes(activeChild.id)) return [];
     return activeAssignedIds.length ? [{ ...chore, activeAssignedIds }] : [];
   });
 
@@ -127,7 +134,7 @@ export default async function ChildViewPage({
       <div className="page-head">
         <div>
           <p className="eyebrow">Kids&apos; Chore View</p>
-          <h1>Mark chores complete</h1>
+          <h1>{activeChild ? `Hi ${activeChild.name}!` : "Mark chores complete"}</h1>
           <p className="muted">{dailyMotivationalMessage()}</p>
         </div>
       </div>
@@ -171,6 +178,7 @@ export default async function ChildViewPage({
         </div>
         {availableDueChores.length ? availableDueChores.map((chore) => {
           const assignedChildren = childRows.filter((child) => chore.activeAssignedIds.includes(child.id));
+          const selectableChildren = activeChild ? assignedChildren.filter((child) => child.id === activeChild.id) : assignedChildren;
           const splitPaymentAvailable = Boolean(chore.split_payment_enabled);
           return (
             <article className="card chore-card" key={chore.id}>
@@ -186,7 +194,7 @@ export default async function ChildViewPage({
                 <div className="field">
                   <label htmlFor={`child-${chore.id}`}>Child profile</label>
                   <select id={`child-${chore.id}`} name="child_id" required>
-                    {assignedChildren.map((child) => <option value={child.id} key={child.id}>{child.name}</option>)}
+                    {selectableChildren.map((child) => <option value={child.id} key={child.id}>{child.name}</option>)}
                   </select>
                 </div>
                 <div className="field">
