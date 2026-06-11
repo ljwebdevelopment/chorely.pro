@@ -72,9 +72,6 @@ button:disabled {
 }
 
 .site-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
   background: rgba(255, 250, 240, 0.96);
   border-bottom: 1px solid var(--line);
   box-shadow: 0 8px 24px rgba(96, 72, 48, 0.08);
@@ -300,10 +297,6 @@ h3 {
 }
 
 .sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
   border-right: 1px solid var(--line);
   background: #fff6e7;
   padding: 22px;
@@ -516,10 +509,67 @@ textarea {
 }
 
 .chore-note-panel {
+  border-top: 1px dashed #d8c5aa;
+  padding-top: 10px;
+}
+
+.chore-note-panel[open] {
   display: grid;
   gap: 12px;
-  border-top: 1px dashed #d8c5aa;
-  padding-top: 14px;
+}
+
+.chore-note-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  width: fit-content;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+  list-style: none;
+}
+
+.chore-note-summary::-webkit-details-marker {
+  display: none;
+}
+
+.chore-note-summary::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-right: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+
+.chore-note-panel[open] > .chore-note-summary::before {
+  transform: rotate(45deg);
+}
+
+/* Expandable chore cards */
+.chore-expand > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.chore-expand > summary::-webkit-details-marker {
+  display: none;
+}
+
+.chore-expand > summary .reward-pill::after {
+  content: " ▾";
+  font-size: 0.8em;
+}
+
+.chore-expand[open] > summary .reward-pill::after {
+  content: " ▴";
+}
+
+.chore-expand[open] > summary {
+  margin-bottom: 12px;
 }
 
 .chore-note {
@@ -1165,9 +1215,6 @@ textarea {
 
 /* Kids' chore view */
 .kid-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   gap: 8px;
   border: 1px solid var(--line);
@@ -1210,7 +1257,7 @@ textarea {
 #today,
 #coming-up,
 #done {
-  scroll-margin-top: 76px;
+  scroll-margin-top: 12px;
 }
 
 .kid-chore-head {
@@ -1299,15 +1346,6 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .kid-tabs {
-    top: 64px;
-  }
-
-  #today,
-  #coming-up,
-  #done {
-    scroll-margin-top: 130px;
-  }
 
 
   .nav {
@@ -1333,10 +1371,6 @@ textarea {
   }
 
   .sidebar {
-    position: sticky;
-    top: 0;
-    z-index: 15;
-    height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--line);
     padding: 16px 18px;

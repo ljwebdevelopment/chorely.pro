@@ -22,7 +22,11 @@ export function ChoreCommentPanel({ choreId, source, latestComment, canMarkRead 
   const sourceSlug = source.replace(/\//g, "").replace(/[^a-z0-9-]/gi, "");
 
   return (
-    <div className="chore-note-panel">
+    <details className="chore-note-panel" open={hasFreshIssue}>
+      <summary className="chore-note-summary">
+        {hasFreshIssue ? <span className="note-label">New note</span> : null}
+        Notes &amp; supplies
+      </summary>
       {latestComment ? (
         <div className={hasFreshIssue ? "chore-note latest is-new" : "chore-note latest"}>
           <span className="note-label">{choreCommentKindLabel(latestComment.kind)}</span>
@@ -76,6 +80,6 @@ export function ChoreCommentPanel({ choreId, source, latestComment, canMarkRead 
           </button>
         </div>
       </form>
-    </div>
+    </details>
   );
 }

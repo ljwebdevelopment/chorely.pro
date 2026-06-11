@@ -208,16 +208,14 @@ export default async function ChildViewPage({
           const selectableChildren = activeChild ? assignedChildren.filter((child) => child.id === activeChild.id) : assignedChildren;
           const splitPaymentAvailable = Boolean(chore.split_payment_enabled);
           return (
-            <article className="card chore-card" key={chore.id}>
+            <details className="card chore-card chore-expand" key={chore.id}>
+              <summary className="kid-chore-head">
+                <h2>{chore.title}</h2>
+                <span className="reward-pill">{centsToDollars(chore.reward_cents)}</span>
+              </summary>
+              <p className="muted">{chore.description || "Complete the chore, then submit it for approval."}</p>
               <form className="form-grid" action={completeChoreAction}>
                 <input type="hidden" name="chore_id" value={chore.id} />
-                <div className="field full kid-chore-head">
-                  <h2>{chore.title}</h2>
-                  <span className="reward-pill">{centsToDollars(chore.reward_cents)}</span>
-                </div>
-                <div className="field full">
-                  <p className="muted">{chore.description || "Complete the chore, then submit it for approval."}</p>
-                </div>
                 <div className="field">
                   <label htmlFor={`child-${chore.id}`}>Child profile</label>
                   <select id={`child-${chore.id}`} name="child_id" required>
@@ -260,7 +258,7 @@ export default async function ChildViewPage({
                 </div>
               </form>
               <ChoreCommentPanel choreId={chore.id} source="/child" latestComment={latestCommentByChore.get(chore.id)} canMarkRead={false} />
-            </article>
+            </details>
           );
         }) : <div className="empty-state"><h2>All done for today!</h2><p className="muted">Nothing is due right now. Check Coming Up to see what&apos;s next.</p></div>}
       </section>
