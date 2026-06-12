@@ -3,6 +3,8 @@ import { deleteAccountAction, updateHouseholdAction, updateProfileAction } from 
 import { getAppContext } from "@/lib/auth-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePageData } from "@/lib/page-data";
+import { TEST_MODE } from "@/lib/test-mode";
+import { FOUNDING_TESTER_BADGE_LABEL } from "@/lib/volunteer-domain";
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; updated?: string }> }) {
   const params = await searchParams;
@@ -11,12 +13,26 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const { data: profile, error: profileError } = await supabase.from("profiles").select("full_name").eq("id", context.user.id).maybeSingle();
   const profileRow = requirePageData({ data: profile, error: profileError, label: "Account profile" });
 
+  let isFoundingTester = false;
+  if (TEST_MODE) {
+    const { data: volunteer } = await supabase
+      .from("volunteer_testers")
+      .select("founding_tester")
+      .eq("auth_user_id", context.user.id)
+      .eq("founding_tester", true)
+      .maybeSingle();
+    isFoundingTester = Boolean(volunteer);
+  }
+
   return (
     <div className="stack">
       <div className="page-head">
         <div>
           <p className="eyebrow">Account</p>
-          <h1>Account settings</h1>
+          <h1>
+            Account settings
+            {isFoundingTester ? <span className="hero-badge founding-tester-badge">{FOUNDING_TESTER_BADGE_LABEL}</span> : null}
+          </h1>
         </div>
         <Link className="secondary-button" href="/account/billing">
           Billing

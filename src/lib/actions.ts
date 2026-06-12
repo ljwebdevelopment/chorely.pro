@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/auth-context";
 import { getSiteUrl } from "@/lib/env";
@@ -54,6 +54,14 @@ import {
   setupActionErrorPath
 } from "@/lib/onboarding-domain";
 import { safeRedirectPath } from "@/lib/redirect-domain";
+import { TEST_MODE, VOLUNTEER_VERIFY_COOKIE } from "@/lib/test-mode";
+import {
+  normalizePhone,
+  volunteerAlreadyClaimedMessage,
+  volunteerNotFoundMessage,
+  volunteerVerificationError,
+  volunteerVerificationExpiredMessage
+} from "@/lib/volunteer-domain";
 import { approvalNoteError, approvalSideEffectFailureMessage, canReviewCompletion, isReviewAction, reviewWriteFailureMessage } from "@/lib/approval-domain";
 import { childArchiveFailureMessage, childAvatarUrlError, childNameError, childPinRequirementError, childSaveFailureMessage } from "@/lib/child-domain";
 import {
@@ -132,6 +140,94 @@ export async function signInAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) redirect(`/sign-in?next=${encodeURIComponent(next)}&error=${encodeURIComponent(authProviderFailureMessage({ action: "sign-in" }))}`);
   redirect(next);
+}
+
+export async function verifyVolunteerAction(formData: FormData) {
+  if (!TEST_MODE) redirect("/sign-in");
+
+  const email = formString(formData, "email").toLowerCase();
+  const phone = formString(formData, "phone");
+  const validationError = volunteerVerificationError({ email, phone });
+  if (validationError) {
+    redirect(`/volunteer-verify?error=${encodeURIComponent(validationError)}`);
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+  const admin = createSupabaseAdminClient();
+  const { data: volunteer, error } = await admin
+    .from("volunteer_testers")
+    .select("id,auth_user_id")
+    .eq("normalized_phone", normalizedPhone)
+    .ilike("email", email)
+    .maybeSingle();
+  if (error || !volunteer) {
+    redirect(`/volunteer-verify?error=${encodeURIComponent(volunteerNotFoundMessage())}`);
+  }
+  if (volunteer.auth_user_id) {
+    redirect(`/volunteer-verify?error=${encodeURIComponent(volunteerAlreadyClaimedMessage())}`);
+  }
+
+  const store = await cookies();
+  store.set(VOLUNTEER_VERIFY_COOKIE, volunteer.id, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 30
+  });
+
+  redirect("/volunteer-claim");
+}
+
+export async function claimVolunteerAction(formData: FormData) {
+  if (!TEST_MODE) redirect("/sign-in");
+
+  const store = await cookies();
+  const volunteerId = store.get(VOLUNTEER_VERIFY_COOKIE)?.value;
+  if (!volunteerId) {
+    redirect(`/volunteer-verify?error=${encodeURIComponent(volunteerVerificationExpiredMessage())}`);
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: volunteer, error: lookupError } = await admin
+    .from("volunteer_testers")
+    .select("id,name,email,auth_user_id")
+    .eq("id", volunteerId)
+    .maybeSingle();
+  if (lookupError || !volunteer) {
+    redirect(`/volunteer-verify?error=${encodeURIComponent(volunteerVerificationExpiredMessage())}`);
+  }
+  if (volunteer.auth_user_id) {
+    redirect(`/volunteer-verify?error=${encodeURIComponent(volunteerAlreadyClaimedMessage())}`);
+  }
+
+  const password = formString(formData, "password");
+  const passwordConfirmation = formString(formData, "password_confirmation");
+  const passwordError = passwordConfirmationError({ password, confirmation: passwordConfirmation });
+  if (passwordError) {
+    redirect(`/volunteer-claim?error=${encodeURIComponent(passwordError)}`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const origin = (await headers()).get("origin") || getSiteUrl();
+  const { data, error } = await supabase.auth.signUp({
+    email: volunteer.email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback?next=/onboarding`,
+      data: { full_name: volunteer.name }
+    }
+  });
+  if (error || !data.user) {
+    redirect(`/volunteer-claim?error=${encodeURIComponent(authProviderFailureMessage({ action: "sign-up" }))}`);
+  }
+
+  await admin
+    .from("volunteer_testers")
+    .update({ auth_user_id: data.user.id, claimed_at: new Date().toISOString() })
+    .eq("id", volunteer.id);
+
+  store.delete(VOLUNTEER_VERIFY_COOKIE);
+  redirect("/verify-email");
 }
 
 export async function signOutAction() {

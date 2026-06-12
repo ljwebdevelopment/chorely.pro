@@ -7,6 +7,22 @@ import { getAppContext } from "@/lib/auth-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getActiveProfile } from "@/lib/profile-session";
 import { signOutAction, switchProfileAction } from "@/lib/actions";
+import { TEST_MODE } from "@/lib/test-mode";
+
+async function TestModeBanner({ userId }: { userId: string }) {
+  if (!TEST_MODE) return null;
+  const supabase = await createSupabaseServerClient();
+  const { data: volunteer } = await supabase
+    .from("volunteer_testers")
+    .select("name,founding_tester")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
+  return (
+    <div className="test-mode-banner">
+      Test mode{volunteer ? ` — ${volunteer.name}${volunteer.founding_tester ? " (Founding Tester)" : ""}` : ""} — volunteer testing in progress.
+    </div>
+  );
+}
 
 const links = [
   { href: "/dashboard", label: "Home Board", icon: Home },
@@ -38,6 +54,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
       <div className="app-shell">
+        <TestModeBanner userId={context.user.id} />
         <aside className="sidebar kid-sidebar">
           <BrandLogo />
           <p className="meta" style={{ marginTop: 12 }}>
@@ -68,6 +85,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
+      <TestModeBanner userId={context.user.id} />
       <aside className="sidebar">
         <ActiveLink href="/dashboard" exact aria-label="Chorely dashboard">
           <BrandLogo />

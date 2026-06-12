@@ -116,4 +116,18 @@ describe("auth flow source safeguards", () => {
     assert.match(authContext, /if \(!user\) \{[\s\S]*?return await redirectToSignIn\(\);[\s\S]*?\}/);
     assert.doesNotMatch(authContext, /redirect\("\/sign-in"\)/);
   });
+
+  it("gates the volunteer verification and claim flow behind TEST_MODE", () => {
+    const actions = readFileSync("src/lib/actions.ts", "utf8");
+    const signInPage = readFileSync("src/app/(auth)/sign-in/page.tsx", "utf8");
+
+    assert.doesNotMatch(signInPage, /testSignInAction/);
+    assert.doesNotMatch(actions, /testSignInAction/);
+    assert.match(actionSource(actions, "verifyVolunteerAction"), /if \(!TEST_MODE\) redirect\("\/sign-in"\)/);
+    assert.match(actionSource(actions, "claimVolunteerAction"), /if \(!TEST_MODE\) redirect\("\/sign-in"\)/);
+    assert.match(
+      actionSource(actions, "claimVolunteerAction"),
+      /emailRedirectTo: `\$\{origin\}\/auth\/callback\?next=\/onboarding`/
+    );
+  });
 });

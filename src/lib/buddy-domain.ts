@@ -62,7 +62,7 @@ export const buddyBloomColors = {
 
 export const buddyFaces = ["smile", "wink", "none"] as const;
 
-export const buddyAccessories = ["none", "sunglasses", "bow", "bowtie"] as const;
+export const buddyAccessories = ["none", "sunglasses", "glasses", "bow", "bowtie", "hat"] as const;
 
 export type BuddyStyle = {
   pot: keyof typeof buddyPotColors;

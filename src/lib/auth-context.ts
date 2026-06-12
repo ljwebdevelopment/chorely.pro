@@ -5,6 +5,7 @@ import type { SubscriptionStatus } from "@/lib/types";
 import { isSubscriptionActive } from "@/lib/billing-domain";
 import { requirePageData } from "@/lib/page-data";
 import { safeRedirectPath } from "@/lib/redirect-domain";
+import { TEST_MODE } from "@/lib/test-mode";
 
 export type AppContext = {
   user: {
@@ -74,8 +75,18 @@ export async function getAppContext(options: { requireSubscription?: boolean; re
   }
 
   const status = (subscription?.status || "none") as SubscriptionStatus;
-  const subscribed = isSubscriptionActive(status);
+  let subscribed = isSubscriptionActive(status);
   const onboardingComplete = Boolean(profileRow.onboarding_complete);
+
+  if (TEST_MODE && !subscribed) {
+    const { data: volunteer } = await supabase
+      .from("volunteer_testers")
+      .select("premium_override")
+      .eq("auth_user_id", user.id)
+      .eq("premium_override", true)
+      .maybeSingle();
+    if (volunteer) subscribed = true;
+  }
 
   if (options.requireSubscription && !subscribed) {
     const currentPath = await currentRequestPath();
