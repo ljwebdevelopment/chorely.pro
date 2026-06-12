@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Lock, RefreshCcw, Smartphone } from "lucide-react";
+import { PUBLIC_SIGN_UP_HREF } from "@/lib/test-mode";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -70,7 +71,7 @@ export default function PricingPage() {
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-              <Link className="button" href="/sign-up">
+              <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
                 Start for $6/month
               </Link>
               <p className="meta" style={{ marginTop: 12 }}>

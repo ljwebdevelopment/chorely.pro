@@ -29,9 +29,11 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <Link className="secondary-button" href={`/forgot-password?next=${encodeURIComponent(next)}`}>
         Forgot password
       </Link>
-      <Link className="ghost-button" href={`/sign-up?next=${encodeURIComponent(next)}`}>
-        Create account
-      </Link>
+      {!TEST_MODE ? (
+        <Link className="ghost-button" href={`/sign-up?next=${encodeURIComponent(next)}`}>
+          Create account
+        </Link>
+      ) : null}
       {TEST_MODE ? (
         <Link className="ghost-button" href="/volunteer-verify">
           Volunteer tester? Claim your account
