@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { signUpAction } from "@/lib/actions";
 import { safeRedirectPath } from "@/lib/redirect-domain";
+import { TEST_MODE } from "@/lib/test-mode";
 
 export default async function SignUpPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
   const params = await searchParams;
@@ -35,6 +36,11 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
       <Link className="secondary-button" href={`/sign-in?next=${encodeURIComponent(next)}`}>
         Sign in instead
       </Link>
+      {TEST_MODE ? (
+        <Link className="ghost-button" href="/volunteer-verify">
+          Volunteer tester? Claim your account
+        </Link>
+      ) : null}
     </form>
   );
 }

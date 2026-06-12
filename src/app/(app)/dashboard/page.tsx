@@ -185,8 +185,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               )) : <p className="muted">No chores are due today.</p>}
             </div>
           </article>
-          <article className="card">
-            <h2>Ready to Approve ({approvalRows.length})</h2>
+          <details className="card collapsible-card" open={approvalRows.length > 0}>
+            <summary>
+              <h2>Ready to Approve ({approvalRows.length})</h2>
+            </summary>
             <div className="list">
               {approvalRows.length ? approvalRows.map((approval) => (
                 <div className="list-item" key={approval.id}>
@@ -195,7 +197,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </div>
               )) : <p className="muted">No pending approvals.</p>}
             </div>
-          </article>
+          </details>
           <details className="card collapsible-card">
             <summary>
               <h2>Family Activity</h2>

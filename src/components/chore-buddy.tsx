@@ -73,6 +73,22 @@ export function BuddySprite({
           <rect x="57.4" y="101" width="5.2" height="6" rx="1.6" fill="#5C7A91" />
         </g>
       ) : null}
+      {resolved.accessory === "glasses" ? (
+        <g>
+          <circle cx="53" cy="91" r="5" fill="none" stroke="#3A2F23" strokeWidth="1.6" />
+          <circle cx="67" cy="91" r="5" fill="none" stroke="#3A2F23" strokeWidth="1.6" />
+          <path d="M58 91H62" stroke="#3A2F23" strokeWidth="1.6" />
+          <path d="M48 89C49.5 88 51 87.8 53 88.3" stroke="#6B5B47" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M62 89C63.5 88 67 87.8 69 88.3" stroke="#6B5B47" strokeWidth="1.2" strokeLinecap="round" />
+        </g>
+      ) : null}
+      {resolved.accessory === "hat" ? (
+        <g>
+          <path d="M68 70L78 50L88 70Z" fill="#C97A7A" />
+          <rect x="66" y="68" width="24" height="4" rx="2" fill="#B56363" />
+          <circle cx="78" cy="48" r="3" fill="#E8B5B5" />
+        </g>
+      ) : null}
       {/* soil */}
       <ellipse cx="60" cy="76" rx="20" ry="4" fill="#6B5138" />
 

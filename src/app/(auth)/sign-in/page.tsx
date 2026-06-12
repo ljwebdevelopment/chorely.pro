@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { signInAction } from "@/lib/actions";
 import { safeRedirectPath } from "@/lib/redirect-domain";
+import { TEST_MODE } from "@/lib/test-mode";
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
   const params = await searchParams;
   const next = safeRedirectPath(params.next, "/dashboard");
+
   return (
     <form className="form-card form-grid" action={signInAction}>
       <input type="hidden" name="next" value={next} />
@@ -30,6 +32,11 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <Link className="ghost-button" href={`/sign-up?next=${encodeURIComponent(next)}`}>
         Create account
       </Link>
+      {TEST_MODE ? (
+        <Link className="ghost-button" href="/volunteer-verify">
+          Volunteer tester? Claim your account
+        </Link>
+      ) : null}
     </form>
   );
 }
