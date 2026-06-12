@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
@@ -73,7 +73,7 @@ describe("auth flow source safeguards", () => {
   it("validates profile names before account profile writes", () => {
     const actions = readFileSync("src/lib/actions.ts", "utf8");
     const signUpPage = readFileSync("src/app/(auth)/sign-up/page.tsx", "utf8");
-    const accountPage = readFileSync("src/app/account/page.tsx", "utf8");
+    const accountPage = readFileSync("src/app/account/(shell)/page.tsx", "utf8");
     const updateProfile = actionSource(actions, "updateProfileAction");
 
     assert.match(updateProfile, /const fullName = formString\(formData, "full_name"\)/);

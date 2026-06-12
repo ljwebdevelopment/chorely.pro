@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand";
-import { ActiveLink } from "@/components/active-link";
 import { getAppContext } from "@/lib/auth-context";
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountLayout({ children }: { children: React.ReactNode }) {
+// Billing intentionally stays outside the app sidebar shell: it is the
+// destination of the subscription-required redirect, so it must render
+// without an active subscription or a selected profile.
+export default async function BillingLayout({ children }: { children: React.ReactNode }) {
   await getAppContext();
 
   return (
@@ -15,11 +17,8 @@ export default async function AccountLayout({ children }: { children: React.Reac
           <Link href="/dashboard">
             <BrandLogo />
           </Link>
-          <nav className="nav-links" aria-label="Account navigation">
-            <ActiveLink href="/account" exact>Profile</ActiveLink>
-            <ActiveLink href="/account/security">Security</ActiveLink>
-            <ActiveLink href="/account/billing">Billing</ActiveLink>
-            <Link href="/children">Family Members</Link>
+          <nav className="nav-links" aria-label="Billing navigation">
+            <Link href="/account">Account</Link>
             <Link href="/dashboard">Dashboard</Link>
           </nav>
         </div>

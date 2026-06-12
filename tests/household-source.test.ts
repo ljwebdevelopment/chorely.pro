@@ -14,7 +14,7 @@ describe("household source safeguards", () => {
   it("validates onboarding household names before creating households", () => {
     const actions = readFileSync("src/lib/actions.ts", "utf8");
     const onboardingPage = readFileSync("src/app/onboarding/page.tsx", "utf8");
-    const accountPage = readFileSync("src/app/account/page.tsx", "utf8");
+    const accountPage = readFileSync("src/app/account/(shell)/page.tsx", "utf8");
 
     assert.match(actions, /const name = formString\(formData, "name", "My Household"\)/);
     assert.match(actions, /const nameError = householdNameError\(name\)/);
