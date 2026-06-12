@@ -150,7 +150,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ))}
           </div>
         ) : null}
-        <p className="balance-hero-meta">Approved chores add to it, recorded payouts come out of it.</p>
+        <p className="balance-hero-meta">
+          {centsToDollars(lifetimeEarned)} earned all-time · approved chores add to it, payouts come out
+        </p>
       </section>
       <DashboardTour />
       <nav className="quick-actions" aria-label="Quick actions">
@@ -164,16 +166,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           );
         })}
       </nav>
-      <section className="stats-grid">
-        <div className="stat"><span>Today&apos;s Chores</span><strong>{dueChores.length}</strong></div>
-        <div className="stat"><span>Pending approvals</span><strong>{approvalRows.length}</strong></div>
-        <div className="stat"><span>Family Members</span><strong>{childRows.length}</strong></div>
-        <div className="stat"><span>Lifetime Earned</span><strong>{centsToDollars(lifetimeEarned)}</strong></div>
-      </section>
       <section className="content-grid">
         <div className="stack">
           <article className="card">
-            <h2>Today&apos;s Chores</h2>
+            <h2>Today&apos;s Chores ({dueChores.length})</h2>
             <div className="list">
               {dueChores.length ? dueChores.slice(0, 6).map((chore) => (
                 <div className="mini-chore-card" key={chore.id}>
@@ -190,7 +186,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </div>
           </article>
           <article className="card">
-            <h2>Today&apos;s Wins</h2>
+            <h2>Ready to Approve ({approvalRows.length})</h2>
             <div className="list">
               {approvalRows.length ? approvalRows.map((approval) => (
                 <div className="list-item" key={approval.id}>
@@ -200,8 +196,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               )) : <p className="muted">No pending approvals.</p>}
             </div>
           </article>
-          <article className="card">
-            <h2>Family Activity</h2>
+          <details className="card collapsible-card">
+            <summary>
+              <h2>Family Activity</h2>
+            </summary>
             <div className="list">
               {recentActivity.length ? recentActivity.map((completion, index) => {
                 const chore = (Array.isArray(completion.chores) ? completion.chores[0] : completion.chores) as { title?: string } | null;
@@ -233,19 +231,23 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 );
               }) : <p className="muted">Completed chores will show up here as the family gets going.</p>}
             </div>
-          </article>
+          </details>
         </div>
         <aside className="stack">
-          <article className="card">
-            <h2>Weekly Goal</h2>
-            <p className="lead">{weekly.approved} of {weekly.submitted}</p>
+          <BuddyCard weeklyApproved={weekly.approved} wateredToday={completionRows.length > 0} title="Sprout, the family chore buddy" style={buddyStyle} />
+          <details className="card collapsible-card">
+            <summary>
+              <h2>This Week</h2>
+            </summary>
+            <p className="lead">{weekly.approved} of {weekly.submitted} approved</p>
             <p className="muted">
               Last 7 days: {weekly.pending} pending, {weekly.redoRequested} redo requested, and {weekly.rejected} rejected.
             </p>
-          </article>
-          <BuddyCard weeklyApproved={weekly.approved} wateredToday={completionRows.length > 0} title="Sprout, the family chore buddy" style={buddyStyle} />
-          <article className="card">
-            <h2>Household Notes</h2>
+          </details>
+          <details className="card collapsible-card">
+            <summary>
+              <h2>Household Notes</h2>
+            </summary>
             {notificationRows.length ? notificationRows.map((notification) => (
               <p className="muted" key={notification.id}>
                 <strong>{notification.title}</strong>
@@ -257,7 +259,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </span>
               </p>
             )) : <p className="muted">Activity will appear as chores are assigned and approved.</p>}
-          </article>
+          </details>
         </aside>
       </section>
     </div>

@@ -1389,7 +1389,8 @@ export async function saveBuddyStyleAction(formData: FormData) {
   const style = normalizeBuddyStyle({
     pot: formString(formData, "pot"),
     bloom: formString(formData, "bloom"),
-    face: formString(formData, "face")
+    face: formString(formData, "face"),
+    accessory: formString(formData, "accessory")
   });
 
   const { data: updated, error } = await supabase

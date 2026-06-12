@@ -62,10 +62,13 @@ export const buddyBloomColors = {
 
 export const buddyFaces = ["smile", "wink", "none"] as const;
 
+export const buddyAccessories = ["none", "sunglasses", "bow", "bowtie"] as const;
+
 export type BuddyStyle = {
   pot: keyof typeof buddyPotColors;
   bloom: keyof typeof buddyBloomColors;
   face: (typeof buddyFaces)[number];
+  accessory: (typeof buddyAccessories)[number];
 };
 
 export function normalizeBuddyStyle(value: unknown): BuddyStyle {
@@ -73,7 +76,11 @@ export function normalizeBuddyStyle(value: unknown): BuddyStyle {
   const pot = typeof raw.pot === "string" && raw.pot in buddyPotColors ? (raw.pot as BuddyStyle["pot"]) : "terracotta";
   const bloom = typeof raw.bloom === "string" && raw.bloom in buddyBloomColors ? (raw.bloom as BuddyStyle["bloom"]) : "gold";
   const face = typeof raw.face === "string" && buddyFaces.includes(raw.face as BuddyStyle["face"]) ? (raw.face as BuddyStyle["face"]) : "smile";
-  return { pot, bloom, face };
+  const accessory =
+    typeof raw.accessory === "string" && buddyAccessories.includes(raw.accessory as BuddyStyle["accessory"])
+      ? (raw.accessory as BuddyStyle["accessory"])
+      : "none";
+  return { pot, bloom, face, accessory };
 }
 
 export function reminderBody(input: { childName: string; requested?: string | null }) {

@@ -297,6 +297,7 @@ h3 {
 }
 
 .sidebar {
+  min-width: 0;
   border-right: 1px solid var(--line);
   background: #fff6e7;
   padding: 22px;
@@ -1284,7 +1285,49 @@ textarea {
   white-space: nowrap;
 }
 
-/* Buddy customizer */
+/* Collapsible dashboard cards */
+.collapsible-card > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.collapsible-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-card > summary h2 {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.collapsible-card > summary::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-right: 2.5px solid var(--muted);
+  border-bottom: 2.5px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+
+.collapsible-card[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.collapsible-card[open] > summary {
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 10px;
+}
+
+/* Buddy customizer studio */
 .buddy-customizer summary {
   width: fit-content;
   cursor: pointer;
@@ -1295,12 +1338,92 @@ textarea {
   display: none;
 }
 
-.buddy-customizer form {
+.buddy-studio {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
   padding: 16px;
+}
+
+.buddy-preview {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, #fffdf5, #f3f0e2);
+  padding: 14px;
+}
+
+.buddy-options {
+  display: grid;
+  gap: 14px;
+}
+
+.buddy-option-row {
+  display: grid;
+  gap: 7px;
+}
+
+.buddy-option-label {
+  color: var(--navy);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.buddy-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.buddy-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+.buddy-swatch.is-selected {
+  border-color: var(--navy);
+}
+
+.buddy-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.buddy-choice {
+  min-height: 44px;
+  border: 1.5px solid #d8c5aa;
+  border-radius: 999px;
+  background: #fffdf7;
+  color: var(--slate);
+  padding: 0 14px;
+  font-weight: 750;
+}
+
+.buddy-choice.is-selected {
+  border-color: var(--green);
+  background: #eef3e7;
+  color: #4f6f45;
+}
+
+@media (max-width: 640px) {
+  .buddy-studio {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .buddy-options {
+    width: 100%;
+  }
 }
 
 .reminder-notice {
@@ -1367,7 +1490,7 @@ textarea {
   }
 
   .app-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sidebar {
@@ -1409,7 +1532,21 @@ textarea {
   }
 
   .app-main {
-    padding: 18px;
+    padding: 16px 14px 32px;
+  }
+
+  .card,
+  .form-card,
+  .empty-state {
+    padding: 16px;
+  }
+
+  .page-head {
+    margin-bottom: 16px;
+  }
+
+  .stack {
+    gap: 13px;
   }
 
   .page-head,

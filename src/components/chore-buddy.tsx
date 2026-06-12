@@ -7,7 +7,6 @@ import {
   type BuddyStage,
   type BuddyStyle
 } from "@/lib/buddy-domain";
-import { saveBuddyStyleAction } from "@/lib/actions";
 
 export function BuddySprite({
   stage,
@@ -37,7 +36,7 @@ export function BuddySprite({
       <path d="M38 78H82L77 106C76.6 108.3 74.6 110 72.2 110H47.8C45.4 110 43.4 108.3 43 106L38 78Z" fill={pot.pot} />
       <rect x="34" y="72" width="52" height="9" rx="4.5" fill={pot.rim} />
       {/* pot face */}
-      {resolved.face !== "none" ? (
+      {resolved.face !== "none" && resolved.accessory !== "sunglasses" ? (
         <>
           <circle cx="53" cy="91" r="2.4" fill="#4A3A28" />
           {resolved.face === "wink" ? (
@@ -45,8 +44,34 @@ export function BuddySprite({
           ) : (
             <circle cx="67" cy="91" r="2.4" fill="#4A3A28" />
           )}
-          <path d="M55 98C57.8 100.6 62.2 100.6 65 98" stroke="#4A3A28" strokeWidth="2.2" strokeLinecap="round" />
         </>
+      ) : null}
+      {resolved.face !== "none" ? (
+        <path d="M55 98C57.8 100.6 62.2 100.6 65 98" stroke="#4A3A28" strokeWidth="2.2" strokeLinecap="round" />
+      ) : null}
+      {/* accessories */}
+      {resolved.accessory === "sunglasses" ? (
+        <g>
+          <path d="M44 86H76" stroke="#3A2F23" strokeWidth="2" strokeLinecap="round" />
+          <rect x="46" y="85" width="13" height="9" rx="3.5" fill="#3A2F23" />
+          <rect x="61" y="85" width="13" height="9" rx="3.5" fill="#3A2F23" />
+          <path d="M48 87.5C49.5 86.5 52 86.3 54 87" stroke="#6B5B47" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M63 87.5C64.5 86.5 67 86.3 69 87" stroke="#6B5B47" strokeWidth="1.4" strokeLinecap="round" />
+        </g>
+      ) : null}
+      {resolved.accessory === "bow" ? (
+        <g>
+          <path d="M42 73L32 67L34.5 77Z" fill="#C97A7A" />
+          <path d="M42 73L52 67L49.5 77Z" fill="#C97A7A" />
+          <circle cx="42" cy="73" r="3.4" fill="#B56363" />
+        </g>
+      ) : null}
+      {resolved.accessory === "bowtie" ? (
+        <g>
+          <path d="M60 104L51 99.5V108.5Z" fill="#6F8FA6" />
+          <path d="M60 104L69 99.5V108.5Z" fill="#6F8FA6" />
+          <rect x="57.4" y="101" width="5.2" height="6" rx="1.6" fill="#5C7A91" />
+        </g>
       ) : null}
       {/* soil */}
       <ellipse cx="60" cy="76" rx="20" ry="4" fill="#6B5138" />
@@ -124,71 +149,5 @@ export function BuddyCard({
         </p>
       </div>
     </article>
-  );
-}
-
-const potLabels: Record<BuddyStyle["pot"], string> = {
-  terracotta: "Terracotta",
-  sage: "Sage",
-  sky: "Sky blue",
-  sunny: "Sunny yellow"
-};
-
-const bloomLabels: Record<BuddyStyle["bloom"], string> = {
-  gold: "Golden",
-  rose: "Rose",
-  violet: "Violet"
-};
-
-const faceLabels: Record<BuddyStyle["face"], string> = {
-  smile: "Smiley",
-  wink: "Winking",
-  none: "No face"
-};
-
-export function BuddyCustomizer({ style, source }: { style?: Partial<BuddyStyle> | null; source: string }) {
-  const resolved = normalizeBuddyStyle(style);
-  return (
-    <details className="buddy-customizer">
-      <summary className="secondary-button">Customize Sprout</summary>
-      <form className="form-grid" action={saveBuddyStyleAction}>
-        <input type="hidden" name="source" value={source} />
-        <div className="field">
-          <label htmlFor="buddy-pot">Pot color</label>
-          <select id="buddy-pot" name="pot" defaultValue={resolved.pot}>
-            {(Object.keys(potLabels) as BuddyStyle["pot"][]).map((value) => (
-              <option value={value} key={value}>
-                {potLabels[value]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="buddy-bloom">Flower color</label>
-          <select id="buddy-bloom" name="bloom" defaultValue={resolved.bloom}>
-            {(Object.keys(bloomLabels) as BuddyStyle["bloom"][]).map((value) => (
-              <option value={value} key={value}>
-                {bloomLabels[value]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="buddy-face">Face</label>
-          <select id="buddy-face" name="face" defaultValue={resolved.face}>
-            {(Object.keys(faceLabels) as BuddyStyle["face"][]).map((value) => (
-              <option value={value} key={value}>
-                {faceLabels[value]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field" style={{ alignSelf: "end" }}>
-          <button className="button" type="submit">
-            Save Sprout&apos;s look
-          </button>
-        </div>
-      </form>
-    </details>
   );
 }
