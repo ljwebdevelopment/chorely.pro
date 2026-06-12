@@ -12,6 +12,17 @@ import { weeklyActivityStats } from "@/lib/report-domain";
 import { getActiveProfile } from "@/lib/profile-session";
 
 const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+const doneDateFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+function finishedLabel(completedAt: string, now = new Date()) {
+  const completed = new Date(completedAt);
+  if (Number.isNaN(completed.getTime())) return null;
+  const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(now) - startOfDay(completed)) / 86400000);
+  if (dayDiff <= 0) return "today";
+  if (dayDiff === 1) return "yesterday";
+  return doneDateFormatter.format(completed);
+}
 
 export default async function ChildViewPage({
   searchParams
@@ -306,11 +317,15 @@ export default async function ChildViewPage({
                       : completion.status === "redo_requested"
                         ? "Parent asked for a redo"
                         : "Not approved";
+              const finished = finishedLabel(completion.completed_at);
               return (
                 <div className="list-item" key={`${completion.chore_id}-${completion.completed_at}-${index}`}>
                   <div>
                     <strong>{chore?.title || "Chore"}</strong>
-                    <p className="meta">{statusLabel}</p>
+                    <p className="meta">
+                      {statusLabel}
+                      {finished ? ` · Finished ${finished}` : ""}
+                    </p>
                   </div>
                   <span className={completion.status === "approved" ? "reward-pill" : "meta"}>
                     {chore?.reward_cents != null ? centsToDollars(Number(chore.reward_cents)) : ""}
