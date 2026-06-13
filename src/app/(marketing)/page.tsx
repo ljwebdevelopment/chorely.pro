@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarCheck, HandCoins, Heart, ShieldCheck, Sprout, Wallet } from "lucide-react";
 import { BuddySprite } from "@/components/chore-buddy";
+import { PUBLIC_SIGN_UP_HREF } from "@/lib/test-mode";
 
 const previewRows = [
   ["Make your bed", "$1.00", "Approved"],
@@ -46,7 +47,7 @@ export default function HomePage() {
               they watch their money — and their responsibility — grow.
             </p>
             <div className="actions" style={{ marginTop: 26 }}>
-              <Link className="button" href="/sign-up">
+              <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
                 Start your family for $6/month
               </Link>
               <Link className="secondary-button" href="/pricing">
@@ -128,7 +129,7 @@ export default function HomePage() {
               <li>Sprout grows from seed to full bloom as the week&apos;s chores get done</li>
               <li>Gentle reminders, not nagging — parents can send a friendly nudge</li>
             </ul>
-            <Link className="button" href="/sign-up">
+            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
               Get started
             </Link>
           </div>
@@ -189,7 +190,7 @@ export default function HomePage() {
               <li>Payout tracking and weekly reports</li>
               <li>Installs on iPhone and Android home screens</li>
             </ul>
-            <Link className="button" href="/sign-up">
+            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
               Start for $6/month
             </Link>
           </article>
@@ -204,7 +205,7 @@ export default function HomePage() {
               Set up your household in about five minutes: add your kids, create your first chores, and put Chorely on
               everyone&apos;s home screen.
             </p>
-            <Link className="button" href="/sign-up">
+            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
               <HandCoins size={18} aria-hidden="true" /> Start your family today
             </Link>
           </div>
