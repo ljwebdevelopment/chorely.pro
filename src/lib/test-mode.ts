@@ -9,8 +9,3 @@
 export const TEST_MODE = process.env.TEST_MODE === "true";
 
 export const VOLUNTEER_VERIFY_COOKIE = "chorely-volunteer-verify";
-
-// While TEST_MODE is on, public "Get started" / "Create account" links should
-// point at sign-in (the only public-facing entry point) instead of the
-// hidden public sign-up page.
-export const PUBLIC_SIGN_UP_HREF = TEST_MODE ? "/sign-in" : "/sign-up";

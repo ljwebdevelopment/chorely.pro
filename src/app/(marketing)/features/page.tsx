@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Bell, CalendarCheck, ChartNoAxesColumn, HandCoins, Smartphone, Sprout, Users, Wallet } from "lucide-react";
-import { PUBLIC_SIGN_UP_HREF } from "@/lib/test-mode";
+import { TEST_MODE } from "@/lib/test-mode";
 
 export const metadata: Metadata = {
   title: "Features",
@@ -75,9 +75,11 @@ export default function FeaturesPage() {
         <div className="cta-banner" style={{ marginTop: 40 }}>
           <h2>See it with your own kids</h2>
           <p>Set up your household in about five minutes, for $6 a month.</p>
-          <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-            Get started
-          </Link>
+          {!TEST_MODE ? (
+            <Link className="button" href="/sign-up">
+              Get started
+            </Link>
+          ) : null}
         </div>
       </div>
     </main>

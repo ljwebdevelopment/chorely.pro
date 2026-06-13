@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarCheck, HandCoins, Heart, ShieldCheck, Sprout, Wallet } from "lucide-react";
 import { BuddySprite } from "@/components/chore-buddy";
-import { PUBLIC_SIGN_UP_HREF } from "@/lib/test-mode";
+import { TEST_MODE } from "@/lib/test-mode";
 
 const previewRows = [
   ["Make your bed", "$1.00", "Approved"],
@@ -47,9 +47,11 @@ export default function HomePage() {
               they watch their money — and their responsibility — grow.
             </p>
             <div className="actions" style={{ marginTop: 26 }}>
-              <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-                Start your family for $6/month
-              </Link>
+              {!TEST_MODE ? (
+                <Link className="button" href="/sign-up">
+                  Start your family for $6/month
+                </Link>
+              ) : null}
               <Link className="secondary-button" href="/pricing">
                 See what&apos;s included
               </Link>
@@ -129,9 +131,11 @@ export default function HomePage() {
               <li>Sprout grows from seed to full bloom as the week&apos;s chores get done</li>
               <li>Gentle reminders, not nagging — parents can send a friendly nudge</li>
             </ul>
-            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-              Get started
-            </Link>
+            {!TEST_MODE ? (
+              <Link className="button" href="/sign-up">
+                Get started
+              </Link>
+            ) : null}
           </div>
           <div className="hero-panel buddy-card" aria-label="Sprout the chore buddy preview">
             <BuddySprite stage={3} watered size={120} />
@@ -190,9 +194,11 @@ export default function HomePage() {
               <li>Payout tracking and weekly reports</li>
               <li>Installs on iPhone and Android home screens</li>
             </ul>
-            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-              Start for $6/month
-            </Link>
+            {!TEST_MODE ? (
+              <Link className="button" href="/sign-up">
+                Start for $6/month
+              </Link>
+            ) : null}
           </article>
         </div>
       </section>
@@ -205,9 +211,11 @@ export default function HomePage() {
               Set up your household in about five minutes: add your kids, create your first chores, and put Chorely on
               everyone&apos;s home screen.
             </p>
-            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-              <HandCoins size={18} aria-hidden="true" /> Start your family today
-            </Link>
+            {!TEST_MODE ? (
+              <Link className="button" href="/sign-up">
+                <HandCoins size={18} aria-hidden="true" /> Start your family today
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
