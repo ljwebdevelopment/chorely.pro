@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Lock, RefreshCcw, Smartphone } from "lucide-react";
-import { PUBLIC_SIGN_UP_HREF } from "@/lib/test-mode";
+import { TEST_MODE } from "@/lib/test-mode";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -71,9 +71,11 @@ export default function PricingPage() {
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-              <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-                Start for $6/month
-              </Link>
+              {!TEST_MODE ? (
+                <Link className="button" href="/sign-up">
+                  Start for $6/month
+                </Link>
+              ) : null}
               <p className="meta" style={{ marginTop: 12 }}>
                 Create your account, subscribe securely through Stripe, and you&apos;ll be walked through setup step by
                 step.

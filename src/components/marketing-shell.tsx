@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand";
-import { PUBLIC_SIGN_UP_HREF } from "@/lib/test-mode";
+import { TEST_MODE } from "@/lib/test-mode";
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
@@ -20,9 +20,11 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <Link className="ghost-button" href="/sign-in">
               Sign in
             </Link>
-            <Link className="button" href={PUBLIC_SIGN_UP_HREF}>
-              Get started
-            </Link>
+            {!TEST_MODE ? (
+              <Link className="button" href="/sign-up">
+                Get started
+              </Link>
+            ) : null}
           </div>
         </div>
       </header>
