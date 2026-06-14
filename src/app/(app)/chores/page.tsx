@@ -13,7 +13,7 @@ export default async function ChoresPage({ searchParams }: { searchParams: Promi
   const supabase = await createSupabaseServerClient();
   const { data: chores, error: choresError } = await supabase
     .from("chores")
-    .select("id,title,reward_cents,frequency,shared_completion_mode,split_payment_enabled,created_at,chore_assignments(children(name))")
+    .select("id,title,reward_cents,frequency,shared_completion_mode,created_at,chore_assignments(children(name))")
     .eq("household_id", context.household!.id)
     .eq("active", true)
     .order("created_at", { ascending: false });
@@ -58,7 +58,7 @@ export default async function ChoresPage({ searchParams }: { searchParams: Promi
                 <h2>{chore.title}</h2>
                 <p className="muted">
                   {centsToDollars(chore.reward_cents)} / {chore.frequency} / shared rule: {chore.shared_completion_mode}
-                  {chore.split_payment_enabled ? " / split payments enabled" : ""}
+                  {(chore.chore_assignments?.length || 0) > 1 ? " / Completed Together available" : ""}
                 </p>
               </div>
               <div className="actions">

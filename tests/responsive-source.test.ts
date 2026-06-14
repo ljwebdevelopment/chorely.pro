@@ -5,13 +5,13 @@ import { describe, it } from "node:test";
 const css = readFileSync("src/app/globals.css", "utf8");
 
 describe("responsive layout safeguards", () => {
-  it("keeps the mobile app shell navigation compact and horizontally scrollable", () => {
+  it("keeps the mobile app shell navigation compact and organized in a grid", () => {
     assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.app-shell \{[\s\S]*?grid-template-columns: 1fr;/);
     assert.match(
       css,
-      /@media \(max-width: 900px\) \{[\s\S]*?\.sidebar nav \{[\s\S]*?display: flex;[\s\S]*?overflow-x: auto;[\s\S]*?scrollbar-width: thin;/
+      /@media \(max-width: 900px\) \{[\s\S]*?\.sidebar nav \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/
     );
-    assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.sidebar a \{[\s\S]*?flex: 0 0 auto;[\s\S]*?white-space: nowrap;/);
+    assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.sidebar a \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis;/);
   });
 
   it("keeps keyboard focus visible across links, buttons, and form controls", () => {

@@ -31,15 +31,14 @@ export function validateAssignedParticipants(input: {
   completedByChildId: string;
   requestedParticipantIds: string[];
   completedTogether: boolean;
-  splitPaymentEnabled: boolean;
 }) {
   const assigned = new Set(input.assignedChildIds);
   if (!assigned.has(input.completedByChildId)) {
     throw new Error("This child is not assigned to the selected chore.");
   }
 
-  if (input.completedTogether && !input.splitPaymentEnabled) {
-    throw new Error("Completed Together is not enabled for this chore.");
+  if (input.completedTogether && input.assignedChildIds.length < 2) {
+    throw new Error("Completed Together requires at least two assigned children.");
   }
 
   const requested = uniqueIds(input.requestedParticipantIds.length ? input.requestedParticipantIds : [input.completedByChildId]);
@@ -281,14 +280,14 @@ export function choreSaveFailureMessage(input: {
   return input.target === "delete" ? "Unable to archive this chore right now." : "Unable to save this chore right now.";
 }
 
-export function shouldSplitCompletionReward(input: { splitPaymentEnabled: boolean; completedTogether: boolean }) {
-  return input.splitPaymentEnabled && input.completedTogether;
+export function shouldSplitCompletionReward(input: { completedTogether: boolean; participantCount: number }) {
+  return input.completedTogether && input.participantCount > 1;
 }
 
-export function splitRewardCents(input: { rewardCents: number; participantIds: string[]; splitPaymentEnabled: boolean }) {
+export function splitRewardCents(input: { rewardCents: number; participantIds: string[]; split: boolean }) {
   const participants = uniqueIds(input.participantIds);
   if (!participants.length) return [];
-  if (!input.splitPaymentEnabled || participants.length === 1) {
+  if (!input.split || participants.length === 1) {
     return participants.map((childId) => ({ childId, amountCents: input.rewardCents }));
   }
 

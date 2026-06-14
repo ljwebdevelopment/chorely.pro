@@ -31,7 +31,7 @@ export default async function EarningsPage({
       .order("created_at", { ascending: false }),
     supabase
       .from("chore_completions")
-      .select("id,status,completed_together,participant_child_ids,completed_by_child_id,chores(reward_cents,split_payment_enabled)")
+      .select("id,status,completed_together,participant_child_ids,completed_by_child_id,chores(reward_cents)")
       .eq("household_id", householdId)
       .eq("status", "pending"),
     supabase.from("children").select("id,name,archived_at").eq("household_id", householdId)

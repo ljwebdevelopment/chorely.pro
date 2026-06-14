@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { ACTIVE_PROFILE_COOKIE, profileRedirectPath } from "@/lib/profile-domain";
 
 const protectedPrefixes = [
+  "/admin",
   "/dashboard",
   "/children",
   "/chores",

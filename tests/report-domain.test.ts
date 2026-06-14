@@ -67,20 +67,20 @@ describe("report calculations", () => {
           completed_together: true,
           participant_child_ids: ["child-a", "child-b"],
           completed_by_child_id: "child-a",
-          chore: { reward_cents: 1200, split_payment_enabled: true }
+          chore: { reward_cents: 1200 }
         },
         {
           status: "pending",
           completed_together: false,
           participant_child_ids: ["child-a", "child-b"],
           completed_by_child_id: "child-a",
-          chore: { reward_cents: 500, split_payment_enabled: false }
+          chore: { reward_cents: 500 }
         },
         {
           status: "rejected",
           participant_child_ids: ["child-c"],
           completed_by_child_id: "child-c",
-          chore: { reward_cents: 999, split_payment_enabled: false }
+          chore: { reward_cents: 999 }
         }
       ]),
       2200

@@ -22,7 +22,7 @@ describe("chore archive lifecycle safeguards", () => {
     );
     assert.match(
       actions,
-      /\.from\("chores"\)[\s\S]*?\.select\("title,frequency,custom_schedule,created_at,shared_completion_mode,split_payment_enabled"\)[\s\S]*?\.eq\("id", choreId\)[\s\S]*?\.eq\("household_id", context\.household\.id\)[\s\S]*?\.eq\("active", true\)[\s\S]*?\.single\(\)/
+      /\.from\("chores"\)[\s\S]*?\.select\("title,frequency,custom_schedule,created_at,shared_completion_mode"\)[\s\S]*?\.eq\("id", choreId\)[\s\S]*?\.eq\("household_id", context\.household\.id\)[\s\S]*?\.eq\("active", true\)[\s\S]*?\.single\(\)/
     );
     assert.match(onboardingPage, /\.from\("chores"\)\.select\("id"\)\.eq\("household_id", context\.household\.id\)\.eq\("active", true\)\.limit\(1\)/);
   });

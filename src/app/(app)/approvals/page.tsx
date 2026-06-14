@@ -15,7 +15,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   ] = await Promise.all([
     supabase
       .from("chore_completions")
-      .select("id,completed_at,note,completed_together,completed_by_child_id,participant_child_ids,chores(title,reward_cents,split_payment_enabled),children(name)")
+      .select("id,completed_at,note,completed_together,completed_by_child_id,participant_child_ids,chores(title,reward_cents),children(name)")
       .eq("household_id", context.household!.id)
       .eq("status", "pending")
       .order("completed_at", { ascending: true }),
@@ -45,13 +45,13 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
             ? completion.participant_child_ids
             : [completion.completed_by_child_id].filter((id): id is string => Boolean(id));
           const splitReward = shouldSplitCompletionReward({
-            splitPaymentEnabled: Boolean(chore?.split_payment_enabled),
-            completedTogether: Boolean(completion.completed_together)
+            completedTogether: Boolean(completion.completed_together),
+            participantCount: participantIds.length
           });
           const payouts = splitRewardCents({
             rewardCents: Number(chore?.reward_cents || 0),
             participantIds,
-            splitPaymentEnabled: splitReward
+            split: splitReward
           });
           const participantNames = participantIds.map((id: string) => childNames.get(id) || "Child profile");
           const payoutSummary = payouts

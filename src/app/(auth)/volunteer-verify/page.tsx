@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { verifyVolunteerAction } from "@/lib/actions";
+import { PhoneDigitInput } from "@/components/phone-digit-input";
 import { TEST_MODE } from "@/lib/test-mode";
 
 export default async function VolunteerVerifyPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -20,8 +21,8 @@ export default async function VolunteerVerifyPage({ searchParams }: { searchPara
         <input id="email" name="email" type="email" required autoComplete="email" />
       </div>
       <div className="field full">
-        <label htmlFor="phone">Phone number</label>
-        <input id="phone" name="phone" type="tel" required autoComplete="tel" />
+        <label htmlFor="phone-digit-1">Phone number</label>
+        <PhoneDigitInput name="phone" />
       </div>
       <button className="button" type="submit">
         Continue
