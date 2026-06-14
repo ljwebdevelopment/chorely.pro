@@ -26,7 +26,6 @@ export type PendingEarningCompletion = {
   completed_by_child_id?: string | null;
   chore?: {
     reward_cents?: number | null;
-    split_payment_enabled?: boolean | null;
   } | null;
 };
 
@@ -97,13 +96,13 @@ export function pendingEarningsCents(completions: PendingEarningCompletion[]) {
         : [completion.completed_by_child_id].filter((id): id is string => Boolean(id));
       const rewardCents = Number(completion.chore?.reward_cents || 0);
       const splitReward = shouldSplitCompletionReward({
-        splitPaymentEnabled: Boolean(completion.chore?.split_payment_enabled),
-        completedTogether: Boolean(completion.completed_together)
+        completedTogether: Boolean(completion.completed_together),
+        participantCount: participants.length
       });
       const payouts = splitRewardCents({
         rewardCents,
         participantIds: participants,
-        splitPaymentEnabled: splitReward
+        split: splitReward
       });
 
       return sum + payouts.reduce((payoutSum, payout) => payoutSum + payout.amountCents, 0);

@@ -48,7 +48,7 @@ type ChoreFormProps = {
   childProfiles: Pick<Child, "id" | "name" | "avatar_url">[];
   chore?: Pick<
     Chore,
-    "id" | "title" | "description" | "reward_cents" | "frequency" | "custom_schedule" | "shared_completion_mode" | "split_payment_enabled"
+    "id" | "title" | "description" | "reward_cents" | "frequency" | "custom_schedule" | "shared_completion_mode"
   > & { assigned_child_ids?: string[] };
   source?: "onboarding";
 };
@@ -107,13 +107,11 @@ export function ChoreForm({ childProfiles, chore, source }: ChoreFormProps) {
           <option value="all">Every assigned child must complete</option>
         </select>
       </div>
-      <fieldset className="field checkbox-group">
-        <legend>Payment behavior</legend>
-        <label className="checkbox-line" htmlFor="split_payment_enabled">
-          <input id="split_payment_enabled" type="checkbox" name="split_payment_enabled" defaultChecked={chore?.split_payment_enabled || false} />
-          Enable Completed Together split payments
-        </label>
-      </fieldset>
+      <div className="field full">
+        <p className="meta">
+          Completed Together is automatic: if a chore is assigned to more than one child, they can mark it done together and split the reward — no setup needed.
+        </p>
+      </div>
       <fieldset className="field full checkbox-group">
         <legend>Assign children</legend>
         {childProfiles.length > 1 ? <SelectAllChildren /> : null}

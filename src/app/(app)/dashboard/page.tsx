@@ -10,6 +10,7 @@ import { ChoreCommentPanel, type LatestChoreComment } from "@/components/chore-c
 import { BuddyCard } from "@/components/chore-buddy";
 import { ChoreBell } from "@/components/chore-bell";
 import { DashboardTour } from "@/components/dashboard-tour";
+import { ActiveLink } from "@/components/active-link";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ comment?: string; error?: string; reminder?: string }> }) {
   const params = await searchParams;
@@ -28,7 +29,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     { data: completions, error: completionsError },
     { data: weeklyCompletions, error: weeklyCompletionsError },
     { data: comments, error: commentsError },
-    { data: householdStyle }
+    { data: householdStyle },
+    { data: profile }
   ] = await Promise.all([
     supabase
       .from("chores")
@@ -63,7 +65,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .order("created_at", { ascending: false }),
     // buddy_style ships in migration 004; tolerate its absence so the
     // dashboard never breaks on a database that has not run it yet.
-    supabase.from("households").select("buddy_style").eq("id", householdId).maybeSingle()
+    supabase.from("households").select("buddy_style").eq("id", householdId).maybeSingle(),
+    supabase.from("profiles").select("full_name").eq("id", context.user.id).maybeSingle()
   ]);
   const choreRows = requirePageData({ data: chores, error: choresError, label: "Dashboard chores" });
   const approvalRows = requirePageData({ data: approvals, error: approvalsError, label: "Pending approvals" });
@@ -74,6 +77,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const weeklyCompletionRows = requirePageData({ data: weeklyCompletions, error: weeklyCompletionsError, label: "Weekly progress" });
   const commentRows = requirePageData({ data: comments, error: commentsError, label: "Dashboard household notes" });
   const buddyStyle = householdStyle?.buddy_style || null;
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] || null;
 
   const activeChildIds = childRows.map((child) => child.id);
   const childNameById = new Map(childRows.map((child) => [child.id, child.name]));
@@ -123,11 +127,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ];
 
   return (
-    <div className="stack">
+    <div className="stack dashboard-page">
       <div className="page-head">
         <div>
           <p className="eyebrow">Home Board</p>
-          <h1>Welcome home</h1>
+          <h1>{firstName ? `Welcome back, ${firstName}` : "Welcome home"}</h1>
+          {context.household?.name ? <p className="page-head-subtitle">{context.household.name}</p> : null}
         </div>
         <Link className="button" href="/chores/new">
           New chore
@@ -159,10 +164,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {quickActions.map((action) => {
           const Icon = action.icon;
           return (
-            <Link className="quick-action" href={action.href} key={action.label}>
+            <ActiveLink className="quick-action" href={action.href} key={action.label}>
               <Icon size={20} aria-hidden="true" />
               <span>{action.label}</span>
-            </Link>
+            </ActiveLink>
           );
         })}
       </nav>
@@ -264,6 +269,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </details>
         </aside>
       </section>
+      <Link className="fab" href="/chores/new" aria-label="Add chore">
+        <Plus size={24} aria-hidden="true" />
+      </Link>
     </div>
   );
 }

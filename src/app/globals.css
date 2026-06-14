@@ -276,6 +276,13 @@ h3 {
   line-height: 1.05;
 }
 
+.page-head-subtitle {
+  margin: 2px 0 0;
+  color: var(--slate);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .card h2,
 .form-card h2,
 .empty-state h2 {
@@ -298,12 +305,21 @@ h3 {
 
 .test-mode-banner {
   grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   background: var(--gold);
   color: #4a3a0d;
   font-size: 0.82rem;
   font-weight: 750;
   text-align: center;
   padding: 8px 14px;
+}
+
+.test-mode-banner .ghost-button {
+  padding: 2px;
+  color: #4a3a0d;
 }
 
 .sidebar {
@@ -334,6 +350,17 @@ h3 {
 .sidebar a.active {
   background: #eef3e7;
   color: var(--green);
+}
+
+.sidebar-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sidebar a.mobile-account-link {
+  display: none;
 }
 
 .app-main {
@@ -446,6 +473,26 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   border-color: var(--green);
+}
+
+.digit-input-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.digit-input-section {
+  display: flex;
+  gap: 6px;
+}
+
+.digit-box {
+  width: 2.4em;
+  padding: 11px 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 textarea {
@@ -688,7 +735,14 @@ textarea {
 }
 
 .payout-row input {
+  flex: 1 1 110px;
+  min-width: 90px;
+  width: auto;
+}
+
+.payout-row .button {
   flex: 1;
+  width: auto;
   min-width: 0;
 }
 
@@ -1539,16 +1593,14 @@ textarea {
   .sidebar {
     border-right: 0;
     border-bottom: 1px solid var(--line);
-    padding: 16px 18px;
+    padding: 14px 16px;
   }
 
   .sidebar nav {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
     margin-top: 12px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: thin;
   }
 
   .sidebar form {
@@ -1556,22 +1608,27 @@ textarea {
   }
 
   .sidebar-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    margin-top: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
   }
 
   .sidebar form .secondary-button,
   .sidebar form .ghost-button {
-    width: fit-content;
-    min-height: 38px;
-    padding: 0 14px;
+    width: 100%;
+    min-height: 42px;
     font-size: 0.88rem;
   }
 
   .sidebar a {
-    flex: 0 0 auto;
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.88rem;
+    padding: 10px 10px;
   }
 
   .app-main {
@@ -1643,5 +1700,287 @@ textarea {
   .list-item .danger-button,
   .list-item .ghost-button {
     width: 100%;
+  }
+}
+
+/* Volunteer test-mode bug report trigger + modal */
+.bug-report-trigger {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--slate);
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  box-shadow: 0 6px 18px rgba(96, 72, 48, 0.18);
+}
+
+.bug-report-trigger:hover {
+  background: #eef3e7;
+  color: var(--green);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 35, 23, 0.45);
+  padding: 16px;
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: 0 20px 48px rgba(96, 72, 48, 0.25);
+  padding: 20px;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Mobile bottom navigation bar (replaces dashboard quick actions) */
+.mobile-nav {
+  display: none;
+}
+
+/* Floating action button for adding a chore */
+.fab {
+  display: none;
+}
+
+/* "More" drawer opened from the mobile nav */
+.mobile-more-overlay {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  /* Compact mobile header: logo + household name on the left, account icon on the right */
+  .sidebar {
+    padding: 12px 16px;
+  }
+
+  .sidebar > .meta {
+    margin-top: 2px !important;
+    font-size: 0.8rem;
+  }
+
+  .sidebar a.mobile-account-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--slate);
+    flex: none;
+  }
+
+  .sidebar a.mobile-account-link:hover,
+  .sidebar a.mobile-account-link.active {
+    background: #eef3e7;
+    color: var(--green);
+  }
+
+  /* Sign out / switch profile / full nav move into the mobile "More" drawer */
+  .sidebar:not(.kid-sidebar) nav,
+  .sidebar-actions {
+    display: none;
+  }
+
+  /* Trim the dashboard header so balances are visible immediately */
+  .dashboard-page .page-head {
+    margin-bottom: 12px;
+  }
+
+  .dashboard-page .page-head .eyebrow {
+    display: none;
+  }
+
+  .dashboard-page .page-head h1 {
+    margin-bottom: 0;
+    font-size: 1.4rem;
+  }
+
+  .dashboard-page .page-head-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-page .page-head > a.button {
+    display: none;
+  }
+
+  .balance-hero {
+    padding: 20px 16px 16px;
+    border-radius: 14px;
+  }
+
+  /* Old quick-actions grid is replaced by the bottom nav + FAB */
+  .quick-actions {
+    display: none;
+  }
+
+  .dashboard-page,
+  .app-main {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 20px rgba(96, 72, 48, 0.12);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-nav-item {
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    min-height: 56px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--slate);
+    padding: 6px 2px;
+    font-size: 0.62rem;
+    font-weight: 750;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .mobile-nav-item svg {
+    color: var(--green);
+    width: 22px;
+    height: 22px;
+  }
+
+  .mobile-nav-item:hover,
+  .mobile-nav-item.active {
+    background: #eef3e7;
+    color: var(--green);
+  }
+
+  .fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 16px;
+    bottom: calc(78px + 16px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    background: var(--green);
+    color: white;
+    box-shadow: 0 10px 24px rgba(111, 143, 114, 0.35);
+    z-index: 45;
+  }
+
+  .fab:hover {
+    background: #6f8f5a;
+  }
+
+  .bug-report-trigger {
+    bottom: calc(78px + 16px + env(safe-area-inset-bottom));
+    left: 16px;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+  }
+
+  .mobile-more-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(43, 35, 23, 0.45);
+  }
+
+  .mobile-more-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 51;
+    display: grid;
+    gap: 4px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 18px 18px 0 0;
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+    box-shadow: 0 -12px 32px rgba(96, 72, 48, 0.2);
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-more-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .mobile-more-head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .mobile-more-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 48px;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--slate);
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 14px;
+  }
+
+  .mobile-more-link:hover {
+    background: #eef3e7;
+    color: var(--green);
   }
 }

@@ -26,7 +26,7 @@ export default async function EditChorePage({
   ] = await Promise.all([
     supabase
       .from("chores")
-      .select("id,title,description,reward_cents,frequency,custom_schedule,shared_completion_mode,split_payment_enabled")
+      .select("id,title,description,reward_cents,frequency,custom_schedule,shared_completion_mode")
       .eq("id", id)
       .eq("household_id", householdId)
       .eq("active", true)

@@ -32,12 +32,12 @@ describe("chore reward source safeguards", () => {
     assert.match(forms, /id="custom_schedule"[\s\S]*?name="custom_schedule"[\s\S]*?maxLength=\{120\}/);
   });
 
-  it("uses semantic checkbox groups for shared chore payment and assignments", () => {
+  it("uses semantic checkbox groups for shared chore assignments and explains Completed Together", () => {
     const forms = readFileSync("src/components/forms.tsx", "utf8");
     const css = readFileSync("src/app/globals.css", "utf8");
 
-    assert.match(forms, /<fieldset className="field checkbox-group">[\s\S]*?<legend>Payment behavior<\/legend>/);
-    assert.match(forms, /<label className="checkbox-line" htmlFor="split_payment_enabled">[\s\S]*?<input id="split_payment_enabled" type="checkbox" name="split_payment_enabled"/);
+    assert.match(forms, /Completed Together is automatic/);
+    assert.doesNotMatch(forms, /name="split_payment_enabled"/);
     assert.match(forms, /<fieldset className="field full checkbox-group">[\s\S]*?<legend>Assign children<\/legend>/);
     assert.match(forms, /htmlFor=\{`child_ids_\$\{child\.id\}`\}[\s\S]*?id=\{`child_ids_\$\{child\.id\}`\}/);
     assert.match(css, /fieldset\.field \{[\s\S]*?border: 0;[\s\S]*?padding: 0;/);

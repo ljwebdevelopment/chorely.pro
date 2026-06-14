@@ -17,12 +17,12 @@ describe("page query source safeguards", () => {
     assert.match(childDetailPage, /from\("children"\)\.select\("id,name,avatar_url"\)/);
     assert.match(
       childPage,
-      /select\("id,title,description,reward_cents,frequency,custom_schedule,created_at,split_payment_enabled,chore_assignments\(child_id\)"\)/
+      /select\("id,title,description,reward_cents,frequency,custom_schedule,created_at,chore_assignments\(child_id\)"\)/
     );
     assert.match(childrenPage, /from\("children"\)\.select\("id,name,avatar_url,created_at"\)/);
     assert.match(
       choresPage,
-      /select\("id,title,reward_cents,frequency,shared_completion_mode,split_payment_enabled,created_at,chore_assignments\(children\(name\)\)"\)/
+      /select\("id,title,reward_cents,frequency,shared_completion_mode,created_at,chore_assignments\(children\(name\)\)"\)/
     );
     assert.match(newChorePage, /from\("children"\)[\s\S]*?\.select\("id,name,avatar_url"\)/);
     assert.match(notificationsPage, /from\("notifications"\)[\s\S]*?\.select\("id,title,body,created_at,read_at"\)/);
@@ -34,7 +34,7 @@ describe("page query source safeguards", () => {
     );
     assert.match(
       editChorePage,
-      /select\("id,title,description,reward_cents,frequency,custom_schedule,shared_completion_mode,split_payment_enabled"\)/
+      /select\("id,title,description,reward_cents,frequency,custom_schedule,shared_completion_mode"\)/
     );
     assert.match(editChorePage, /from\("children"\)\.select\("id,name,avatar_url"\)/);
     assert.doesNotMatch(childPage, /select\("\*"\)/);

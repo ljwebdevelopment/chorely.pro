@@ -150,15 +150,14 @@ describe("shared chore completion rules", () => {
     assert.equal(completionNoteError("x".repeat(501)), "Completion note must be 500 characters or fewer.");
   });
 
-  it("rejects unassigned children and disabled Completed Together submissions", () => {
+  it("rejects unassigned children and single-child Completed Together submissions", () => {
     assert.throws(
       () =>
         validateAssignedParticipants({
           assignedChildIds: ["child-a"],
           completedByChildId: "child-b",
           requestedParticipantIds: [],
-          completedTogether: false,
-          splitPaymentEnabled: false
+          completedTogether: false
         }),
       /not assigned/
     );
@@ -166,13 +165,12 @@ describe("shared chore completion rules", () => {
     assert.throws(
       () =>
         validateAssignedParticipants({
-          assignedChildIds: ["child-a", "child-b"],
+          assignedChildIds: ["child-a"],
           completedByChildId: "child-a",
-          requestedParticipantIds: ["child-a", "child-b"],
-          completedTogether: true,
-          splitPaymentEnabled: false
+          requestedParticipantIds: [],
+          completedTogether: true
         }),
-      /not enabled/
+      /at least two assigned children/
     );
   });
 
@@ -182,8 +180,7 @@ describe("shared chore completion rules", () => {
         assignedChildIds: ["child-a", "child-b"],
         completedByChildId: "child-a",
         requestedParticipantIds: ["child-b"],
-        completedTogether: true,
-        splitPaymentEnabled: true
+        completedTogether: true
       }),
       ["child-a", "child-b"]
     );
@@ -194,8 +191,7 @@ describe("shared chore completion rules", () => {
           assignedChildIds: ["child-a", "child-b"],
           completedByChildId: "child-a",
           requestedParticipantIds: [],
-          completedTogether: true,
-          splitPaymentEnabled: true
+          completedTogether: true
         }),
       /at least two/
     );
@@ -298,7 +294,7 @@ describe("split-payment rewards", () => {
       splitRewardCents({
         rewardCents: 1001,
         participantIds: ["child-a", "child-b", "child-c"],
-        splitPaymentEnabled: true
+        split: true
       }),
       [
         { childId: "child-a", amountCents: 335 },
@@ -313,7 +309,7 @@ describe("split-payment rewards", () => {
       splitRewardCents({
         rewardCents: 1200,
         participantIds: ["child-a", "child-b"],
-        splitPaymentEnabled: false
+        split: false
       }),
       [
         { childId: "child-a", amountCents: 1200 },
@@ -322,10 +318,10 @@ describe("split-payment rewards", () => {
     );
   });
 
-  it("splits rewards only for actual Completed Together submissions", () => {
-    assert.equal(shouldSplitCompletionReward({ splitPaymentEnabled: true, completedTogether: true }), true);
-    assert.equal(shouldSplitCompletionReward({ splitPaymentEnabled: true, completedTogether: false }), false);
-    assert.equal(shouldSplitCompletionReward({ splitPaymentEnabled: false, completedTogether: true }), false);
+  it("splits rewards only for actual Completed Together submissions with more than one participant", () => {
+    assert.equal(shouldSplitCompletionReward({ completedTogether: true, participantCount: 2 }), true);
+    assert.equal(shouldSplitCompletionReward({ completedTogether: false, participantCount: 2 }), false);
+    assert.equal(shouldSplitCompletionReward({ completedTogether: true, participantCount: 1 }), false);
   });
 });
 

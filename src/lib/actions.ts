@@ -12,6 +12,7 @@ import { hashPin, verifyPin } from "@/lib/security";
 import { createNotification } from "@/lib/notifications";
 import { choreMilestones, milestoneNotificationPayloads, notificationWriteFailureMessage } from "@/lib/notification-domain";
 import { normalizeBuddyStyle, reminderBody } from "@/lib/buddy-domain";
+import { isAdminEmail } from "@/lib/admin";
 import { parentPinError } from "@/lib/profile-domain";
 import { clearActiveProfile, setActiveProfile } from "@/lib/profile-session";
 import {
@@ -139,6 +140,7 @@ export async function signInAction(formData: FormData) {
   const next = safeRedirectPath(formString(formData, "next", "/dashboard"));
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) redirect(`/sign-in?next=${encodeURIComponent(next)}&error=${encodeURIComponent(authProviderFailureMessage({ action: "sign-in" }))}`);
+  if (isAdminEmail(email)) redirect("/admin");
   redirect(next);
 }
 
@@ -700,7 +702,6 @@ export async function saveChoreAction(formData: FormData) {
     frequency,
     custom_schedule: customSchedule || null,
     shared_completion_mode: sharedCompletionMode,
-    split_payment_enabled: checked(formData, "split_payment_enabled"),
     updated_at: new Date().toISOString()
   };
 
@@ -947,7 +948,7 @@ export async function completeChoreAction(formData: FormData) {
   ] = await Promise.all([
     supabase
       .from("chores")
-      .select("title,frequency,custom_schedule,created_at,shared_completion_mode,split_payment_enabled")
+      .select("title,frequency,custom_schedule,created_at,shared_completion_mode")
       .eq("id", choreId)
       .eq("household_id", context.household.id)
       .eq("active", true)
@@ -1008,8 +1009,7 @@ export async function completeChoreAction(formData: FormData) {
       assignedChildIds,
       completedByChildId: childId,
       requestedParticipantIds: participantIds,
-      completedTogether,
-      splitPaymentEnabled: Boolean(chore.split_payment_enabled)
+      completedTogether
     });
     const progressError = completionProgressContributionError({
       existingStatus: existingCompletion?.status,
@@ -1161,7 +1161,7 @@ export async function reviewCompletionAction(formData: FormData) {
 
   const { data: completion, error } = await supabase
     .from("chore_completions")
-    .select("id,chore_id,household_id,status,completed_together,participant_child_ids,completed_by_child_id,chores(title,reward_cents,split_payment_enabled)")
+    .select("id,chore_id,household_id,status,completed_together,participant_child_ids,completed_by_child_id,chores(title,reward_cents)")
     .eq("id", completionId)
     .eq("household_id", context.household.id)
     .single();
@@ -1210,13 +1210,13 @@ export async function reviewCompletionAction(formData: FormData) {
       ? completion.participant_child_ids
       : [completion.completed_by_child_id].filter((id): id is string => Boolean(id));
     const splitReward = shouldSplitCompletionReward({
-      splitPaymentEnabled: Boolean(chore?.split_payment_enabled),
-      completedTogether: Boolean(completion.completed_together)
+      completedTogether: Boolean(completion.completed_together),
+      participantCount: participants.length
     });
     const payouts = splitRewardCents({
       rewardCents: reward,
       participantIds: participants,
-      splitPaymentEnabled: splitReward
+      split: splitReward
     });
 
     const { error: ledgerError } = await supabase
@@ -1276,6 +1276,37 @@ export async function reviewCompletionAction(formData: FormData) {
         message: approvalSideEffectFailureMessage({ target: "notification" })
       })
     );
+  }
+
+  if (action === "redo_requested") {
+    const chore = Array.isArray(completion.chores) ? completion.chores[0] : completion.chores;
+    const choreTitle = chore?.title || "your chore";
+    const participantIds = completion.participant_child_ids?.length
+      ? completion.participant_child_ids
+      : [completion.completed_by_child_id].filter((id): id is string => Boolean(id));
+
+    const { data: redoChildren } = await supabase.from("children").select("id,name").in("id", participantIds);
+    const childNames = (redoChildren || []).map((child) => child.name);
+
+    const { error: redoNotificationError } = await createNotification({
+      householdId: context.household.id,
+      userId: context.user.id,
+      type: "child_reminder",
+      title: `Redo requested: ${choreTitle}`,
+      body: childNames.length
+        ? `${childNames.join(" and ")}, your parent asked you to redo "${choreTitle}".${note ? ` Note: ${note}` : ""}`
+        : `Your parent asked for "${choreTitle}" to be redone.${note ? ` Note: ${note}` : ""}`
+    });
+    if (redoNotificationError) {
+      redirect(
+        setupActionErrorPath({
+          source,
+          fallbackPath: "/approvals",
+          step: "approve",
+          message: approvalSideEffectFailureMessage({ target: "notification" })
+        })
+      );
+    }
   }
 
   revalidatePath("/approvals");
@@ -1657,4 +1688,50 @@ export async function completeOnboardingAction() {
   }
 
   redirect("/dashboard");
+}
+
+export type BugReportState = { status: "idle" | "success" | "error"; message?: string };
+
+export async function submitBugReportAction(_prevState: BugReportState, formData: FormData): Promise<BugReportState> {
+  if (!TEST_MODE) {
+    return { status: "error", message: "Bug reporting is only available in test mode." };
+  }
+
+  const whatHappened = formString(formData, "what_happened");
+  if (!whatHappened) {
+    return { status: "error", message: "Please describe what happened." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { status: "error", message: "Please sign in to report a bug." };
+  }
+
+  const { data: volunteer } = await supabase
+    .from("volunteer_testers")
+    .select("id,name,email")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  const { error } = await supabase.from("bug_reports").insert({
+    user_id: user.id,
+    volunteer_tester_id: volunteer?.id || null,
+    name: volunteer?.name || null,
+    email: volunteer?.email || user.email || null,
+    page_path: formString(formData, "page_path") || null,
+    device_type: formString(formData, "device_type") || null,
+    what_happened: whatHappened,
+    what_trying_to_do: formString(formData, "what_trying_to_do") || null,
+    user_agent: formString(formData, "user_agent") || null,
+    test_mode: true
+  });
+
+  if (error) {
+    return { status: "error", message: "Your report could not be sent right now. Please try again." };
+  }
+
+  return { status: "success", message: "Thank you! Your report was sent to Luke." };
 }

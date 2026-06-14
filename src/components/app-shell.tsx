@@ -3,13 +3,17 @@ import { Bell, BookOpen, ChartNoAxesColumn, CheckSquare, CreditCard, Home, Setti
 import { BrandLogo } from "@/components/brand";
 import { ActiveLink } from "@/components/active-link";
 import { NotificationBridge } from "@/components/notification-bridge";
+import { NotificationPermissionPrompt } from "@/components/notification-prompt";
+import { BugReportButton } from "@/components/bug-report";
+import { TestModeBanner } from "@/components/test-mode-banner";
+import { MobileNav } from "@/components/mobile-nav";
 import { getAppContext } from "@/lib/auth-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getActiveProfile } from "@/lib/profile-session";
 import { signOutAction, switchProfileAction } from "@/lib/actions";
 import { TEST_MODE } from "@/lib/test-mode";
 
-async function TestModeBanner({ userId }: { userId: string }) {
+async function AppTestModeBanner({ userId }: { userId: string }) {
   if (!TEST_MODE) return null;
   const supabase = await createSupabaseServerClient();
   const { data: volunteer } = await supabase
@@ -17,11 +21,8 @@ async function TestModeBanner({ userId }: { userId: string }) {
     .select("name,founding_tester")
     .eq("auth_user_id", userId)
     .maybeSingle();
-  return (
-    <div className="test-mode-banner">
-      Test mode{volunteer ? ` — ${volunteer.name}${volunteer.founding_tester ? " (Founding Tester)" : ""}` : ""} — volunteer testing in progress.
-    </div>
-  );
+  const message = `Test mode${volunteer ? ` — ${volunteer.name}${volunteer.founding_tester ? " (Founding Tester)" : ""}` : ""} — volunteer testing in progress.`;
+  return <TestModeBanner message={message} />;
 }
 
 const links = [
@@ -54,7 +55,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
       <div className="app-shell">
-        <TestModeBanner userId={context.user.id} />
+        <AppTestModeBanner userId={context.user.id} />
         <aside className="sidebar kid-sidebar">
           <BrandLogo />
           <p className="meta" style={{ marginTop: 12 }}>
@@ -73,6 +74,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </form>
         </aside>
         <main className="app-main">{children}</main>
+        {TEST_MODE ? <BugReportButton /> : null}
       </div>
     );
   }
@@ -85,11 +87,16 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
-      <TestModeBanner userId={context.user.id} />
+      <AppTestModeBanner userId={context.user.id} />
       <aside className="sidebar">
-        <ActiveLink href="/dashboard" exact aria-label="Chorely dashboard">
-          <BrandLogo />
-        </ActiveLink>
+        <div className="sidebar-header-row">
+          <ActiveLink href="/dashboard" exact aria-label="Chorely dashboard">
+            <BrandLogo />
+          </ActiveLink>
+          <ActiveLink className="mobile-account-link" href="/account" aria-label="Account settings">
+            <Settings size={20} aria-hidden="true" />
+          </ActiveLink>
+        </div>
         <p className="meta" style={{ marginTop: 12 }}>
           {context.household?.name || "Household"}
         </p>
@@ -125,6 +132,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <main className="app-main">{children}</main>
       <NotificationBridge />
+      <NotificationPermissionPrompt />
+      <MobileNav />
+      {TEST_MODE ? <BugReportButton /> : null}
     </div>
   );
 }

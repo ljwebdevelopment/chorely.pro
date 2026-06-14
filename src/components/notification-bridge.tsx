@@ -23,7 +23,7 @@ async function showBrowserNotification(notification: PolledNotification) {
   }
 }
 
-async function pollOnce() {
+export async function pollOnce() {
   const response = await fetch("/api/notifications/poll", { cache: "no-store" });
   if (!response.ok) return;
   const payload = (await response.json()) as { notifications: PolledNotification[]; unreadCount: number };

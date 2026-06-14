@@ -9,7 +9,7 @@ describe("approvals page source", () => {
     assert.match(approvalsPageSource, /completed_together/);
     assert.match(approvalsPageSource, /completed_by_child_id/);
     assert.match(approvalsPageSource, /participant_child_ids/);
-    assert.match(approvalsPageSource, /chores\(title,reward_cents,split_payment_enabled\)/);
+    assert.match(approvalsPageSource, /chores\(title,reward_cents\)/);
     assert.match(approvalsPageSource, /from\("children"\)\.select\("id,name"\)/);
     assert.match(approvalsPageSource, /shouldSplitCompletionReward/);
     assert.match(approvalsPageSource, /splitRewardCents/);

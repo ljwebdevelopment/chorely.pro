@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell, CheckCircle2, HandCoins, ListChecks, Users, X } from "lucide-react";
 
 const TOUR_DISMISSED_KEY = "chorely:dashboard-tour-dismissed";
+const TOUR_SEEN_KEY = "chorely:dashboard-tour-seen";
 
 const tourCards = [
   {
@@ -40,7 +41,10 @@ export function DashboardTour() {
     // Defer a frame so the localStorage read syncs after hydration without a
     // cascading render inside the effect body.
     const frame = requestAnimationFrame(() => {
-      setVisible(localStorage.getItem(TOUR_DISMISSED_KEY) !== "true");
+      const dismissed = localStorage.getItem(TOUR_DISMISSED_KEY) === "true";
+      const seen = localStorage.getItem(TOUR_SEEN_KEY) === "true";
+      setVisible(!dismissed && !seen);
+      if (!seen) localStorage.setItem(TOUR_SEEN_KEY, "true");
     });
     return () => cancelAnimationFrame(frame);
   }, []);

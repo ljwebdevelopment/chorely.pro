@@ -46,7 +46,7 @@ export default async function ChildViewPage({
     supabase.from("children").select("id,name").eq("household_id", householdId).is("archived_at", null),
     supabase
       .from("chores")
-      .select("id,title,description,reward_cents,frequency,custom_schedule,created_at,split_payment_enabled,chore_assignments(child_id)")
+      .select("id,title,description,reward_cents,frequency,custom_schedule,created_at,chore_assignments(child_id)")
       .eq("household_id", householdId)
       .eq("active", true),
     supabase
@@ -124,7 +124,9 @@ export default async function ChildViewPage({
       createdAt: chore.created_at,
       dueDate: today
     });
-    return due && completableChildIds.length ? [{ ...chore, activeAssignedIds: completableChildIds }] : [];
+    return due && completableChildIds.length
+      ? [{ ...chore, activeAssignedIds: completableChildIds, totalAssignedChildIds: chore.activeAssignedIds }]
+      : [];
   });
 
   // Non-daily chores and their next due day within the coming week.
@@ -218,7 +220,7 @@ export default async function ChildViewPage({
         {availableDueChores.length ? availableDueChores.map((chore) => {
           const assignedChildren = childRows.filter((child) => chore.activeAssignedIds.includes(child.id));
           const selectableChildren = activeChild ? assignedChildren.filter((child) => child.id === activeChild.id) : assignedChildren;
-          const splitPaymentAvailable = Boolean(chore.split_payment_enabled);
+          const completedTogetherAvailable = chore.totalAssignedChildIds.length > 1;
           return (
             <details className="card chore-card chore-expand" key={chore.id}>
               <summary className="kid-chore-head">
@@ -238,7 +240,7 @@ export default async function ChildViewPage({
                   <label htmlFor={`pin-${chore.id}`}>PIN</label>
                   <input id={`pin-${chore.id}`} name="pin" inputMode="numeric" minLength={4} maxLength={8} pattern="[0-9]{4,8}" required />
                 </div>
-                {splitPaymentAvailable ? (
+                {completedTogetherAvailable ? (
                   <>
                     <fieldset className="field full checkbox-group">
                       <legend>Completed Together participants</legend>

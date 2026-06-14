@@ -9,7 +9,10 @@ describe("child-facing chore availability safeguards", () => {
 
     assert.match(childPage, /activeAssignedChildIds\(\{ assignedChildIds: assignedIds, activeChildIds \}\)/);
     assert.match(childPage, /remainingCompletableChildIds/);
-    assert.match(childPage, /return due && completableChildIds\.length \? \[\{ \.\.\.chore, activeAssignedIds: completableChildIds \}\] : \[\]/);
+    assert.match(
+      childPage,
+      /return due && completableChildIds\.length[\s\S]*?\? \[\{ \.\.\.chore, activeAssignedIds: completableChildIds, totalAssignedChildIds: chore\.activeAssignedIds \}\][\s\S]*?: \[\]/
+    );
     assert.match(dashboardPage, /\.select\("id,title,reward_cents,frequency,custom_schedule,created_at,chore_assignments\(child_id\)"\)/);
     assert.match(dashboardPage, /remainingCompletableChildIds/);
     assert.match(dashboardPage, /return completableChildIds\.length > 0 && isChoreDueOn/);
@@ -29,8 +32,8 @@ describe("child-facing chore availability safeguards", () => {
     const childPage = readFileSync("src/app/(app)/child/page.tsx", "utf8");
 
     assert.match(childPage, /id=\{`pin-\$\{chore\.id\}`\} name="pin" inputMode="numeric" minLength=\{4\} maxLength=\{8\} pattern="\[0-9\]\{4,8\}" required/);
-    assert.match(childPage, /const splitPaymentAvailable = Boolean\(chore\.split_payment_enabled\)/);
-    assert.match(childPage, /\{splitPaymentAvailable \? \(/);
+    assert.match(childPage, /const completedTogetherAvailable = chore\.totalAssignedChildIds\.length > 1/);
+    assert.match(childPage, /\{completedTogetherAvailable \? \(/);
     assert.match(childPage, /<fieldset className="field full checkbox-group">[\s\S]*?<legend>Completed Together participants<\/legend>/);
     assert.match(
       childPage,
